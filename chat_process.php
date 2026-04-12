@@ -1,6 +1,17 @@
 <?php
 declare(strict_types=1);
 
+// --- 0. LOAD ENV (Simple Native Loader) ---
+// ฟังก์ชันจำลองการโหลดไฟล์ .env เข้าสู่ getenv()
+if (file_exists(__DIR__ . '/.env')) {
+    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        list($name, $value) = explode('=', $line, 2);
+        putenv(sprintf('%s=%s', trim($name), trim($value)));
+    }
+}
+
 // --- 1. SETTINGS & ERROR HANDLING ---
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
@@ -8,16 +19,19 @@ header('Content-Type: application/json; charset=utf-8');
 
 $config = [
     "db" => [
-        "host" => "127.0.0.1",
-        "user" => "root",
-        "pass" => "v_8K6oo1tE-6UCXa",
-        "name" => "rw_ai"
+        "host" => getenv('DB_HOST') ?: "127.0.0.1",
+        "user" => getenv('DB_USER') ?: "root",
+        "pass" => getenv('DB_PASS') ?: "",
+        "name" => getenv('DB_NAME') ?: "rw_ai"
     ],
     "gemini" => [
-        "api_key" => "AIzaSyA3xd821GSqx7kWIH7LOoAfm5M-IvKVqjw",
-        "model" => "gemini-3.1-flash-lite-preview"
+        "api_key" => getenv('GEMINI_API_KEY'),
+        "model"   => getenv('GEMINI_MODEL') ?: "gemini-1.5-flash"
     ]
 ];
+
+// ... ส่วนที่เหลือของโค้ดเหมือนเดิม ...
+
 
 function send_json(array $data): void {
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
