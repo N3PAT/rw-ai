@@ -29,7 +29,7 @@ $config = [
         "port" => (int)(getenv('DB_PORT') ?: 14495) 
     ],
     "gemini" => [
-        "api_key" => getenv('GEMINI_API_KEY') ?: "AIzaSyA3xd821GSqx7kWIH7LOoAfm5M-IvKVqjw",
+        "api_key" => getenv('GEMINI_API_KEY') ?: "AIzaSyAnwAIm_Qb8gwUIGHO-zqrkuSu1X_whEtM",
         "model"   => getenv('GEMINI_MODEL') ?: "gemini-1.5-flash"
     ]
 ];
