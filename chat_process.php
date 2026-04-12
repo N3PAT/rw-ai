@@ -1,16 +1,18 @@
 <?php
 declare(strict_types=1);
 
-// --- 0. LOAD ENV (Simple Native Loader) ---
-// ฟังก์ชันจำลองการโหลดไฟล์ .env เข้าสู่ getenv()
-if (file_exists(__DIR__ . '/.env')) {
-    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        list($name, $value) = explode('=', $line, 2);
-        putenv(sprintf('%s=%s', trim($name), trim($value)));
+// --- 0. LOAD ENV (Simple Native Loader - Improved) ---
+if (file_exists(__DIR__ . '/.env') && is_readable(__DIR__ . '/.env')) {
+    $lines = @file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (is_array($lines)) {
+        foreach ($lines as $line) {
+            if (strpos(trim($line), '#') === 0 || strpos($line, '=') === false) continue;
+            list($name, $value) = explode('=', $line, 2);
+            putenv(sprintf('%s=%s', trim($name), trim($value)));
+        }
     }
 }
+
 
 // --- 1. SETTINGS & ERROR HANDLING ---
 ini_set('display_errors', '0');
