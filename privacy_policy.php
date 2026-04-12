@@ -212,7 +212,7 @@ $updatedAt = '12 เมษายน 2569';
 
                 <footer class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs sm:text-sm text-slate-500">
                     <p>© <?php echo date('Y'); ?> <?php echo htmlspecialchars($siteName); ?>. All rights reserved.</p>
-                    <p>หน้าเอกสารนี้สามารถปรับข้อความให้ตรงกับระบบจริงได้</p>
+                   
                 </footer>
             </div>
         </div>
