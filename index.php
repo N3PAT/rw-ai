@@ -198,26 +198,7 @@ function scrollToBottom() {
     });
 }
 async function sendFeedback(logId, rating, btnElement) {
-    if (!logId) return;
-    
-    const parent = btnElement.parentElement;
-    parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">ขอบคุณสำหรับ Feedback ครับ!</span>';
 
-    try {
-        await fetch('update_feedback.php', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify({ 
-                log_id: Number(logId), 
-                rating: Number(rating) 
-            })
-        });
-    } catch (e) { 
-        console.error("Feedback Error:", e); 
-    }
-}
 
 
 
@@ -227,7 +208,44 @@ function appendMessage(message, isUser = true, logId = null) {
 
     if (isUser) {
         msgHtml = `
-        <div class="flex justify-end msg-animate w-full">
+    async function sendFeedback(logId, rating, btnElement) {
+    if (!logId) {
+        console.error("Missing Log ID");
+        return;
+    }
+    
+    // แสดง UI ว่ารับทราบแล้ว
+    const parent = btnElement.parentElement;
+    const originalContent = parent.innerHTML;
+    parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">กำลังบันทึก...</span>';
+
+    try {
+        const response = await fetch('update_feedback.php', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ 
+                log_id: Number(logId), 
+                rating: Number(rating) 
+            })
+        });
+
+        const result = await response.json();
+        console.log("Server Response:", result); // ดูผลลัพธ์ใน F12 Console
+
+        if (result.status === "success") {
+            parent.innerHTML = '<span class="text-[10px] text-blue-500">ขอบคุณสำหรับ Feedback ครับ!</span>';
+        } else {
+            // ถ้า Error ให้แสดงข้อความจาก Server
+            parent.innerHTML = `<span class="text-[10px] text-red-500">ผิดพลาด: ${result.message}</span>`;
+        }
+    } catch (e) { 
+        console.error("Network Error:", e);
+        parent.innerHTML = originalContent; // ถ้าพังให้กลับไปเป็นปุ่มเดิม
+    }
+}
+    <div class="flex justify-end msg-animate w-full">
             <div class="flex flex-col items-end max-w-[85%]">
                 <div class="bg-blue-600 text-white p-3.5 px-4 rounded-2xl rounded-br-none shadow-md text-sm md:text-base msg-text">${message}</div>
                 <span class="text-[10px] text-gray-400 mt-1 mr-1">${time}</span>
