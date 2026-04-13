@@ -227,12 +227,51 @@
     function scrollToBottom() { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }
 
     function formatLinks(text) {
-        const urlRegex = /(https?:\/\/[^\s<"']+)/g;
-        return text.replace(urlRegex, (url) => {
-            if (text.includes(`src="${url}"`) || text.includes(`href="${url}"`)) return url;
-            return `<div class="my-2"><a href="${url}" class="link-card group"><div class="bg-blue-600 p-2 rounded-lg text-white"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div><div class="flex flex-col overflow-hidden"><span class="text-[9px] text-gray-400 font-bold uppercase">Link</span><span class="text-blue-600 text-xs truncate">${url}</span></div></a></div>`;
-        });
-    }
+    // 1. Regex สำหรับหา URL ทั่วไป (ข้าม URL ที่ลงท้ายด้วยไฟล์รูปภาพ .png, .jpg, .jpeg, .gif)
+    const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif)))/g;
+    
+    // 2. Regex สำหรับหา URL ที่เป็นรูปภาพโดยเฉพาะ (.png, .jpg, .jpeg, .gif)
+    const imageRegex = /(https?:\/\/[^\s<"']+\.(?:png|jpg|jpeg|gif))/g;
+
+    // ทำการ Replace 2 รอบ
+    let formattedText = text;
+
+    // รอบแรก: แปลง URL ทั่วไปให้เป็น Link Card (กล่องสีฟ้า)
+    formattedText = formattedText.replace(urlRegex, (url) => {
+        // เช็คเผื่อว่าถ้า URL นี้เป็นส่วนหนึ่งของ HTML Tag อยู่แล้ว (เช่น href="..." หรือ src="...") ให้คืนค่าเดิม
+        if (text.includes(`src="${url}"`) || text.includes(`href="${url}"`)) {
+            return url;
+        }
+        
+        // ถ้าเป็น URL เปล่าๆ ให้ทำเป็น Card สวยๆ
+        return `
+        <div class="my-2">
+            <a href="${url}" class="link-card hover:bg-blue-50 transition-all group">
+                <div class="bg-blue-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Link</span>
+                    <span class="text-blue-600 font-medium truncate text-xs md:text-sm">${url}</span>
+                </div>
+            </a>
+        </div>`;
+    });
+
+    // รอบที่สอง: แปลง URL ที่เป็นรูปภาพให้กลายเป็น HTML Tag <img> ทันที
+    formattedText = formattedText.replace(imageRegex, (imageUrl) => {
+        // เช็คเผื่อว่าถ้า URL นี้เป็นส่วนหนึ่งของ HTML Tag อยู่แล้ว (เช่น src="...") ให้คืนค่าเดิม
+        if (text.includes(`src="${imageUrl}"`)) {
+            return imageUrl;
+        }
+        
+        // ถ้าเป็น URL รูปภาพเปล่าๆ ให้ทำเป็น Tag <img> เพื่อแสดงรูป
+        return `<img src="${imageUrl}" alt="รูปภาพจาก AI" class="max-w-full rounded-lg shadow-md my-2 cursor-zoom-in" onclick="openImageModal('${imageUrl}')">`;
+    });
+
+    return formattedText;
+}
+
 function autoResizeTextarea() {
     const inputField = document.getElementById('user-input');
     if (inputField) {
