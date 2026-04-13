@@ -33,17 +33,22 @@ if (!$success) {
     die(json_encode(["status" => "error", "message" => "DB Connection Failed"]));
 }
 // เพิ่มไว้ก่อนบรรทัด $log_id = ...
+// --- แก้ไขจากเดิม ---
 $raw_input = file_get_contents('php://input');
+$data = json_decode($raw_input, true); // แปลง JSON ทันที
+
 if (empty($raw_input)) {
     die(json_encode(["status" => "error", "message" => "ไม่มีข้อมูลดิบส่งมาเลย (Raw input is empty)"]));
 }
 
-// 3. รับข้อมูลจากหน้าบ้าน (JSON)
-$input = file_get_contents('php://input');
-$data = json_decode($input, true);
+// เช็คว่าแปลง JSON สำเร็จไหม
+if ($data === null) {
+    die(json_encode(["status" => "error", "message" => "JSON Decode Error", "raw" => $raw_input]));
+}
 
 $log_id = isset($data['log_id']) ? (int)$data['log_id'] : 0;
 $rating = isset($data['rating']) ? (int)$data['rating'] : 0;
+// ------------------
 
 // 4. อัปเดตข้อมูล
 if ($log_id > 0 && ($rating === 1 || $rating === -1)) {
