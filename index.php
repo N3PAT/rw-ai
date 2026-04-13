@@ -34,32 +34,24 @@
             opacity: 0;
             animation: fadeIn 0.5s ease 0.5s forwards;
         }
-/* ตกแต่งลิงก์ให้ดูทันสมัย */
-.ai-content a {
-    color: #2563eb;
-    text-decoration: none;
-    font-weight: 500;
-    border-bottom: 2px solid #dbeafe;
-    transition: all 0.2s;
-    padding: 0 2px;
-}
-.ai-content a:hover {
-    background-color: #eff6ff;
-    border-bottom-color: #2563eb;
-    color: #1e40af;
-}
-/* สไตล์พิเศษสำหรับลิงก์ที่ต้องการให้ดูเหมือนปุ่ม (ถ้ามี) */
 .link-card {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 4px;
-    background: #f1f5f9;
-    padding: 4px 12px;
-    border-radius: 8px;
+    gap: 12px;
+    background: #ffffff;
+    padding: 8px 12px;
+    border-radius: 12px;
     border: 1px solid #e2e8f0;
-    margin: 2px 0;
-    font-size: 0.85em;
+    margin: 8px 0;
+    width: 100%;
+    max-width: 300px; /* คุมความกว้างไม่ให้ล้น */
+    text-decoration: none !important; /* ปิดขีดเส้นใต้ */
 }
+.link-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -259,10 +251,22 @@ async function sendFeedback(logId, rating, btnElement) {
 function formatLinks(text) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlRegex, function(url) {
-        // แสดงชื่อเว็บสั้นๆ หรือตัดคำให้ดูสะอาดตา
-        return `<a href="${url}" class="font-semibold text-blue-600 underline decoration-blue-200 underline-offset-4 hover:decoration-blue-600 transition-all">${url}</a>`;
+        // สร้างเป็น Link Card สวยๆ
+        return `
+        <div class="my-2">
+            <a href="${url}" class="link-card hover:bg-blue-50 transition-all group">
+                <div class="bg-blue-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </div>
+                <div class="flex flex-col overflow-hidden">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Link</span>
+                    <span class="text-blue-600 font-medium truncate text-xs md:text-sm">${url}</span>
+                </div>
+            </a>
+        </div>`;
     });
 }
+
 
 
 function appendMessage(message, isUser = true, logId = null) {
@@ -277,43 +281,29 @@ function appendMessage(message, isUser = true, logId = null) {
             </div>
         </div>`;
     } else {
-        // --- แก้ไขตรงนี้: จัดการลิงก์ก่อนส่งไป Marked ---
-        const formattedMessage = formatLinks(message); 
-        const markdownMessage = marked.parse(formattedMessage);
+        // 1. แปลง Markdown เป็น HTML ก่อน (เพื่อให้พวกตัวหนา/ตาราง ทำงานเสร็จก่อน)
+        let htmlContent = marked.parse(message);
         
-        const feedbackHtml = logId ? `...โค้ด Feedback เหมือนเดิม...` : '';
+        // 2. ค่อยจัดการหา URL ใน HTML นั้นแล้วเปลี่ยนเป็น Card
+        htmlContent = formatLinks(htmlContent); 
+        
+        const feedbackHtml = logId ? `...` : '';
 
         msgHtml = `
         <div class="flex justify-start msg-animate">
-            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
-                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full">
-            </div>
+            ...
             <div class="flex flex-col items-start max-w-[85%] w-full">
                 <div class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full">
-                    ${markdownMessage}
+                    ${htmlContent}
                 </div>
                 ${feedbackHtml}
-                <span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span>
+                ...
             </div>
         </div>`;
     }
     container.insertAdjacentHTML('beforeend', msgHtml);
     scrollToBottom();
 }
-
-async function sendMessage() {
-    const message = inputField.value.trim();
-    if (!message) return;
-
-    inputField.value = '';
-    inputField.style.height = 'auto';
-    inputField.disabled = true;
-    sendBtn.disabled = true;
-
-    appendMessage(message, true);
-    stepIndicator.classList.remove('hidden');
-    scrollToBottom();
-
     try {
         const response = await fetch('chat_process.php', {
             method: 'POST',
