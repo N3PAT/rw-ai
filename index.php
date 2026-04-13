@@ -242,40 +242,38 @@ function autoResizeTextarea() {
     }
 }
         async function sendMessage() {
-        const message = inputField.value.trim();
-        // เช็คว่าถ้าไม่มีข้อความ หรือปุ่มกำลังปิดอยู่ (ส่งซ้ำ) ให้หยุดทำงาน
-        if (!message || sendBtn.disabled) return;
+    const message = inputField.value.trim();
+    if (!message || sendBtn.disabled) return; // กันการกดรัว
 
-        // เริ่มล็อคปุ่มและช่องพิมพ์
-        sendBtn.disabled = true;
-        inputField.disabled = true;
-        
-        inputField.value = '';
-        autoResizeTextarea(); // เรียกใช้เพื่อให้ช่องหดกลับมา 1 บรรทัด
-        
-        appendMessage(message, true);
-        stepIndicator.classList.remove('hidden');
-        scrollToBottom();
+    sendBtn.disabled = true; // ล็อคปุ่มส่ง
+    inputField.disabled = true; // ล็อคช่องพิมพ์
+    
+    inputField.value = '';
+    autoResizeTextarea(); // รีเซ็ตความสูงช่องพิมพ์กลับเป็น 1 บรรทัด
+    
+    appendMessage(message, true);
+    stepIndicator.classList.remove('hidden');
+    scrollToBottom();
 
-        try {
-            const response = await fetch('chat_process.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
-            });
-            const data = await response.json();
-            stepIndicator.classList.add('hidden');
-            appendMessage(data.response || 'ระบบขัดข้อง', false, data.log_id);
-        } catch (e) {
-            stepIndicator.classList.add('hidden');
-            appendMessage('เชื่อมต่อล้มเหลว', false);
-        } finally {
-            // ปลดล็อคปุ่มและช่องพิมพ์เสมอ ไม่ว่าจะส่งสำเร็จหรือล้มเหลว
-            sendBtn.disabled = false;
-            inputField.disabled = false;
-            inputField.focus(); // ให้ Cursor กลับมาที่ช่องพิมพ์พร้อมพิมพ์ต่อ
-        }
+    try {
+        const response = await fetch('chat_process.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        const data = await response.json();
+        stepIndicator.classList.add('hidden');
+        appendMessage(data.response || 'ระบบขัดข้อง', false, data.log_id);
+    } catch (e) {
+        stepIndicator.classList.add('hidden');
+        appendMessage('เชื่อมต่อล้มเหลว', false);
+    } finally {
+        sendBtn.disabled = false; // ปลดล็อคปุ่ม
+        inputField.disabled = false; // ปลดล็อคช่องพิมพ์
+        inputField.focus();
     }
+}
+
 
     function appendMessage(message, isUser = true, logId = null) {
         const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
@@ -336,7 +334,12 @@ function autoResizeTextarea() {
         }
     });
 
-    function useSuggestion(text) { inputField.value = text; sendMessage(); }
+    function useSuggestion(text) { 
+    inputField.value = text; 
+    autoResizeTextarea(); // เพิ่มบรรทัดนี้
+    sendMessage(); 
+}
+
     inputField.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
 
     // TOS Logic
@@ -351,6 +354,10 @@ function autoResizeTextarea() {
         aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
         setTimeout(openPopup, 500);
     };
+
+    inputField.addEventListener('input', autoResizeTextarea);
+
+
 </script>
 </body>
 </html>
