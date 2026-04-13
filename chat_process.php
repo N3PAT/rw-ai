@@ -154,6 +154,7 @@ $keywords = [
     'history'    => '/(ประวัติ|ก่อตั้ง|ปีที่ตั้ง|ผอ.คนแรก|เรื่องราว)/u',
     'curriculum' => '/(แผน|สายการเรียน|ห้องเรียน|ม.ต้น|ม.ปลาย|กิ๊ฟ|วิทย์|ศิลป์|ห้อง)/u'
 ];
+$isUniform = preg_match('/(แต่งกาย|ชุดรด|ชุดฝึก|ชุดนักเรียน|ผมยาว|เสื้อพละ|คณะสี|ชุดพละ|เครื่องแบบ|ปัก)/u', $userMessageRaw);
 
 if (preg_match($keywords['buildings'], $userMessageRaw)) {
     $res = $conn->query("SELECT building_name, floor, room_info, image_url FROM school_buildings");
