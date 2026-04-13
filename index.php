@@ -197,11 +197,9 @@ function scrollToBottom() {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     });
 }
-// 🛡️ [UPDATE] ฟังก์ชันส่ง Feedback 👍/👎 (แก้ไขเพื่อให้ PHP รับค่าได้)
 async function sendFeedback(logId, rating, btnElement) {
     if (!logId) return;
     
-    // แสดง UI ว่ากดแล้ว
     const parent = btnElement.parentElement;
     parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">ขอบคุณสำหรับ Feedback ครับ!</span>';
 
@@ -209,17 +207,18 @@ async function sendFeedback(logId, rating, btnElement) {
         await fetch('update_feedback.php', {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json' // 🌟 เพิ่มบรรทัดนี้ครับ สำคัญมาก!
+                'Content-Type': 'application/json' 
             },
             body: JSON.stringify({ 
-                log_id: parseInt(logId), 
-                rating: parseInt(rating) 
+                log_id: Number(logId), 
+                rating: Number(rating) 
             })
         });
     } catch (e) { 
         console.error("Feedback Error:", e); 
     }
 }
+
 
 
 function appendMessage(message, isUser = true, logId = null) {
