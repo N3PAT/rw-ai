@@ -272,6 +272,7 @@ function formatLinks(text) {
 function appendMessage(message, isUser = true, logId = null) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     let msgHtml = '';
+    
     if (isUser) {
         msgHtml = `
         <div class="flex justify-end msg-animate w-full">
@@ -283,27 +284,48 @@ function appendMessage(message, isUser = true, logId = null) {
     } else {
         // 1. แปลง Markdown เป็น HTML ก่อน (เพื่อให้พวกตัวหนา/ตาราง ทำงานเสร็จก่อน)
         let htmlContent = marked.parse(message);
-        
-        // 2. ค่อยจัดการหา URL ใน HTML นั้นแล้วเปลี่ยนเป็น Card
+        // 2. แปลง URL เป็น Link Card
         htmlContent = formatLinks(htmlContent); 
         
-        const feedbackHtml = logId ? `...` : '';
+        // ส่วน Feedback (ปรับตามของเดิมที่นัทมี)
+        const feedbackHtml = logId ? `
+            <div class="flex gap-2 mt-2 feedback-btn">
+                <button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md hover:bg-blue-100">👍 มีประโยชน์</button>
+                <button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md hover:bg-red-100">👎 ไม่ชัดเจน</button>
+            </div>` : '';
 
         msgHtml = `
         <div class="flex justify-start msg-animate">
-            ...
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
+                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
+            </div>
             <div class="flex flex-col items-start max-w-[85%] w-full">
                 <div class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full">
                     ${htmlContent}
                 </div>
                 ${feedbackHtml}
-                ...
+                <span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span>
             </div>
         </div>`;
     }
     container.insertAdjacentHTML('beforeend', msgHtml);
     scrollToBottom();
 }
+
+// แก้ไขฟังก์ชัน sendMessage ให้สมบูรณ์
+async function sendMessage() {
+    const message = inputField.value.trim();
+    if (!message) return;
+
+    inputField.value = '';
+    inputField.style.height = 'auto';
+    inputField.disabled = true;
+    sendBtn.disabled = true;
+
+    appendMessage(message, true);
+    stepIndicator.classList.remove('hidden');
+    scrollToBottom();
+
     try {
         const response = await fetch('chat_process.php', {
             method: 'POST',
@@ -324,7 +346,6 @@ function appendMessage(message, isUser = true, logId = null) {
         inputField.focus();
     }
 }
-
 // --- 4. Event Listeners และฟังก์ชันอื่นๆ ---
 function useSuggestion(text) {
     if (inputField.disabled) return;
