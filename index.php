@@ -136,7 +136,7 @@
                 <span class="text-sm font-medium">IG: @n19axor_</span>
             </a>
 
-<a href="privacy_policy.php" id="tos-link" class="block">
+<a href="นโยบายการใช้เทคโนโลยี Generative AI ที่ยอมรับได้ (2).pdf" id="tos-link" class="block">
     <div id="tos-box"
         class="text-left bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 text-xs text-gray-600 h-24 overflow-y-auto shadow-inner cursor-pointer hover:bg-gray-100 transition">
 
