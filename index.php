@@ -227,33 +227,39 @@
     function scrollToBottom() { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }
 
     function formatLinks(text) {
-    // 1. แยก Regex สำหรับรูปภาพ (ครอบคลุมไฟล์ยอดฮิต)
+    // 1. ลบช่องว่างหรือการขึ้นบรรทัดใหม่ที่ AI อาจจะแอบใส่มาในลิงก์ (ช่วยแก้ปัญหาลิงก์ขาด)
+    // หา URL ที่อาจจะโดนตัดบรรทัด .pn \n g แล้วต่อให้ติดกัน
+    let cleanedText = text.replace(/(https?:\/\/[^\s<"']+)\s*\n\s*([^\s<"']+)/gi, '$1$2');
+
+    // 2. Regex สำหรับรูปภาพ
     const imgRegex = /(https?:\/\/[^\s<"']+\.(?:png|jpg|jpeg|gif|webp|svg))/gi;
     
-    // 2. แยก Regex สำหรับลิงก์ทั่วไป (ที่ไม่ใช่รูปภาพ)
+    // 3. Regex สำหรับลิงก์ทั่วไป
     const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg)))/gi;
 
-    let processed = text;
+    let processed = cleanedText;
 
     // --- จัดการรูปภาพก่อน ---
     processed = processed.replace(imgRegex, (imgUrl) => {
-        return `<img src="${imgUrl.trim()}" class="max-w-full rounded-lg shadow-md my-2 cursor-zoom-in" onclick="openImageModal('${imgUrl.trim()}')">`;
+        const cleanUrl = imgUrl.trim();
+        return `<div class="my-2"><img src="${cleanUrl}" class="max-w-full rounded-lg shadow-md cursor-zoom-in border border-gray-200" onclick="openImageModal('${cleanUrl}')" onerror="this.style.display='none'"></div>`;
     });
 
-    // ---ค่อยจัดการลิงก์ที่เหลือเป็น Card ---
+    // --- ค่อยจัดการลิงก์ที่เหลือเป็น Card ---
     processed = processed.replace(urlRegex, (url) => {
+        const cleanUrl = url.trim();
         // ถ้าเป็นส่วนหนึ่งของ tag HTML อยู่แล้ว ไม่ต้องยุ่ง
-        if (processed.includes(`src="${url}"`) || processed.includes(`href="${url}"`)) return url;
+        if (processed.includes(`src="${cleanUrl}"`) || processed.includes(`href="${cleanUrl}"`)) return cleanUrl;
         
         return `
         <div class="my-2">
-            <a href="${url}" class="link-card hover:bg-blue-50 transition-all group">
+            <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group">
                 <div class="bg-blue-600 p-2 rounded-lg text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                 </div>
                 <div class="flex flex-col overflow-hidden text-left">
                     <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
-                    <span class="text-blue-600 font-medium truncate text-xs">${url}</span>
+                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
                 </div>
             </a>
         </div>`;
@@ -261,6 +267,7 @@
 
     return processed;
 }
+
 
 
 function autoResizeTextarea() {
@@ -312,11 +319,17 @@ function autoResizeTextarea() {
     if (isUser) {
         htmlContent = message;
     } else {
-        // แปลง Markdown ก่อนเพื่อให้ตารางหรือตัวหนาทำงานได้
-        let markdownParsed = marked.parse(message);
-        // แล้วค่อยส่งไปจัดรูปและลิงก์
-        htmlContent = formatLinks(markdownParsed);
+        // 1. ล้างโค้ดที่อาจติดมาจาก AI ก่อน (ถ้ามี)
+        let safeMsg = message.replace(/<[^>]*>?/gm, ''); 
+        // 2. แปลงลิงก์และรูปภาพ
+        htmlContent = formatLinks(safeMsg);
+        // 3. แปลง Markdown ทีหลัง (ใช้เฉพาะส่วนที่เป็นตัวหนา หรือตาราง)
+        htmlContent = marked.parse(htmlContent);
     }
+    
+    // ... (ก้อน msgHtml ด้านล่างใช้ของเดิมได้เลย) ...
+
+
     // -----------------------
 
     const feedback = (!isUser && logId) ? `<div class="flex gap-2 mt-2"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคมีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคไม่ชัดเจน</button></div>` : '';
