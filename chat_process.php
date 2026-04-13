@@ -89,7 +89,9 @@ $context = [
 $isSong = preg_match('/(เพลง|มาร์ช|ร้องเพลง|ทำนอง)/u', $userMessageRaw);
 $isHistory = preg_match('/(ประวัติ|ก่อตั้ง|ปีที่|หลวงเทวฤทธิ์|ลูกเสืออากาศ​)/u', $userMessageRaw);
 $isFinance = preg_match('/(ค่าเทอม|จ่ายเงิน|การเงิน)/u', $userMessageRaw); 
-$isUniform = preg_match('/(แต่งกาย|ชุดนักเรียน|ผมยาว|เสื้อพละ|คณะสี|ชุดพละ|เครื่องแบบ|ปักดาว|รด|นศท)/u', $userMessageRaw); 
+$isUniform = preg_match('/(แต่งกาย|ชุดนักเรียน|ผมยาว|เสื้อพละ|คณะสี|ชุดพละ|เครื่องแบบ|ปักดาว|รด|นศท|เชียงแสน|สุโขทัย|อู่ทอง|อยุธยา|รัตนโกสินทร์)/ui', $userMessageRaw);
+$isTravel = preg_match('/(เดินทาง|ไปโรงเรียน|รถเมล์|รถไฟฟ้า|bts|ไปยังไง|ที่ตั้ง|สายรถ)/ui', $userMessageRaw);
+
 // เพิ่ม Keyword สำหรับหมวดที่กิน Resource
 $isAdmin = preg_match('/(ผอ|ผู้อำนวยการ|รอง|บริหาร|ครู|ใครเป็น|รายชื่อ)/u', $userMessageRaw);
 $isBehavior = preg_match('/(คะแนน|พฤติกรรม|ทัณฑ์บน|โควตา|ม.4|หักคะแนน|ความประพฤติ)/u', $userMessageRaw);
@@ -103,11 +105,14 @@ if ($resProfile) {
             $context['map_url'] = $row['info_value_th'];
         } else {
             if ($cat === 'general' || $cat === 'identity' || $cat === 'philosophy' || $cat === 'information' || 
-                ($isUniform && $cat === 'rules') || ($isFinance && $cat === 'finance') ||
-                ($isSong && ($cat === 'song' || $cat === 'identity')) || ($isHistory && $cat === 'history')
-            ) {
-                $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
-            }
+    (($isUniform || $isTravel) && $cat === 'rules') || // เพิ่ม $isTravel ให้ดึงข้อมูลการเดินทางใน rules
+    ($isFinance && $cat === 'finance') ||
+    ($isSong && ($cat === 'song' || $cat === 'identity')) || 
+    ($isHistory && $cat === 'history')
+) {
+    $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
+}
+
         }
     }
 }
