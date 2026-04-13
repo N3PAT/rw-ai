@@ -298,5 +298,21 @@ inputField.addEventListener('keydown', (e) => {
 
 window.onload = () => setTimeout(openPopup, 100);
 </script>
+    <script>
+    function toggleStartButton() {
+        const checkbox = document.getElementById('tos-checkbox');
+        const btn = document.getElementById('start-btn');
+        
+        if (checkbox.checked) {
+            // เมื่อติ๊กยอมรับ ให้เปิดใช้งานปุ่มและเปลี่ยนสีเป็นสีน้ำเงิน
+            btn.disabled = false;
+            btn.className = "w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] duration-300 cursor-pointer";
+        } else {
+            // เมื่อเอาติ๊กออก ให้ล็อกปุ่มและเปลี่ยนเป็นสีเทา
+            btn.disabled = true;
+            btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
+        }
+    }
+    </script>
 </body>
 </html>
