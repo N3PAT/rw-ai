@@ -46,8 +46,8 @@ $error_msg = "";
 $checkAdmin = $conn->query("SELECT COUNT(*) as c FROM system_admins");
 $adminCount = $checkAdmin->fetch_assoc()['c'] ?? 0;
 if ($adminCount == 0) {
-    $defaultUser = 'admin';
-    $defaultPass = 'rw-ai2026';
+    $defaultUser = '';
+    $defaultPass = '';
     $hashedPass = password_hash($defaultPass, PASSWORD_BCRYPT);
     $conn->query("INSERT INTO system_admins (username, password_hash) VALUES ('$defaultUser', '$hashedPass')");
 }
