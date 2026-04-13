@@ -342,27 +342,44 @@ function autoResizeTextarea() {
 function processVisuals(element) {
     let text = element.innerHTML;
     
-    // 1. จัดการรหัสแผนผัง [SHOW_MAP]
-    // นัทต้องเอา URL แผนผังจริงๆ มาใส่ตรงนี้นะครับ
+    // 1. จัดการแผนผัง [SHOW_MAP] (เหมือนเดิม)
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
-    
     if (text.includes('[SHOW_MAP]')) {
         const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
         text = text.replace('[SHOW_MAP]', imgHtml);
     }
 
-    // 2. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL] (ถ้ามี)
+    // 2. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
         const cleanUrl = url.replace(/<[^>]*>?/gm, '').trim();
         return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
     });
 
-    // 3. จัดการลิงก์ทั่วไปที่หลงเหลือ
-    const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+)/gi;
+    // 3. จัดการลิงก์ (ฉบับปรับปรุง: ป้องกันการเบิ้ล)
+    // เราจะหา URL ที่ "ไม่ได้" อยู่ใน Tag <a> หรือ <img>
+    const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
+    
     text = text.replace(urlRegex, (url) => {
-        if (text.includes(`src="${url}"`)) return url;
-        return `<a href="${url}" class="text-blue-600 underline" target="_blank">${url}</a>`;
+        const cleanUrl = url.trim();
+        // ถ้าเป็นไฟล์รูปภาพ (ที่อาจจะหลุดมา) ให้ทำเป็นรูป
+        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+            return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
+        }
+        
+        // ถ้าเป็นลิงก์ทั่วไป ให้ทำเป็น Link Card สวยๆ
+        return `
+        <div class="my-2">
+            <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </div>
+                <div class="flex flex-col overflow-hidden text-left">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
+                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
+                </div>
+            </a>
+        </div>`;
     });
 
     element.innerHTML = text;
