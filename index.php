@@ -186,293 +186,186 @@
             </button>
         </div>
     </footer>
-</div>
-
-        <script>
-marked.setOptions({ breaks: true, gfm: true });
-const inputField = document.getElementById('user-input');
-const container = document.getElementById('chat-container');
-const stepIndicator = document.getElementById('step-indicator');
-const sendBtn = document.getElementById('send-btn');
-const aiStatus = document.getElementById('ai-status');
-
-// --- 1. ฟังก์ชันจัดการหน้าจอ (Popup/Scroll) ---
-function openPopup() { 
-    document.getElementById('credit-popup').classList.remove('opacity-0', 'pointer-events-none');
-    document.getElementById('popup-content').classList.replace('scale-95', 'scale-100');
-}
-
-function closePopup() { 
-    document.getElementById('credit-popup').classList.add('opacity-0', 'pointer-events-none');
-    document.getElementById('popup-content').classList.replace('scale-100', 'scale-95');
-    setTimeout(() => inputField.focus(), 300);
-}
-
-function scrollToBottom() {
-    requestAnimationFrame(() => {
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-    });
-}
-
-function autoResizeTextarea() {
-    inputField.style.height = 'auto';
-    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
-}
-
-// --- 2. ฟังก์ชันส่ง Feedback (ย้ายออกมาข้างนอกให้เป็นอิสระ) ---
-async function sendFeedback(logId, rating, btnElement) {
-    if (!logId) return;
-    
-    const parent = btnElement.parentElement;
-    const originalContent = parent.innerHTML;
-    parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">กำลังบันทึก...</span>';
-
-    try {
-        const response = await fetch('update_feedback.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                log_id: Number(logId), 
-                rating: Number(rating) 
-            })
-        });
-
-        const result = await response.json();
-        if (result.status === "success") {
-            parent.innerHTML = '<span class="text-[10px] text-blue-500">ขอบคุณสำหรับ Feedback ครับ!</span>';
-        } else {
-            parent.innerHTML = `<span class="text-[10px] text-red-500">ผิดพลาด: ${result.message}</span>`;
-        }
-    } catch (e) { 
-        parent.innerHTML = '<span class="text-[10px] text-red-500">การเชื่อมต่อล้มเหลว</span>';
-    }
-}
-
-function formatLinks(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function(url) {
-        // สร้างเป็น Link Card สวยๆ
-        return `
-        <div class="my-2">
-            <a href="${url}" class="link-card hover:bg-blue-50 transition-all group">
-                <div class="bg-blue-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+</div>    
+    <div id="link-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+        <div id="link-modal-content" class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </div>
-                <div class="flex flex-col overflow-hidden">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Link</span>
-                    <span class="text-blue-600 font-medium truncate text-xs md:text-sm">${url}</span>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">ยืนยันการเปิดลิงก์</h3>
+                <p class="text-sm text-gray-500 mb-4">คุณต้องการออกจากหน้านี้เพื่อไปยังเว็บไซต์อื่นหรือไม่?</p>
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-6 text-left">
+                    <p id="target-link-display" class="text-xs text-blue-600 break-all line-clamp-2"></p>
                 </div>
-            </a>
-        </div>`;
-    });
-}
-
-
-
-function appendMessage(message, isUser = true, logId = null) {
-    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    let msgHtml = '';
-    
-    if (isUser) {
-        msgHtml = `
-        <div class="flex justify-end msg-animate w-full">
-            <div class="flex flex-col items-end max-w-[85%]">
-                <div class="bg-blue-600 text-white p-3.5 px-4 rounded-2xl rounded-br-none shadow-md text-sm md:text-base msg-text">${message}</div>
-                <span class="text-[10px] text-gray-400 mt-1 mr-1">${time}</span>
-            </div>
-        </div>`;
-    } else {
-        // 1. แปลง Markdown เป็น HTML ก่อน (เพื่อให้พวกตัวหนา/ตาราง ทำงานเสร็จก่อน)
-        let htmlContent = marked.parse(message);
-        // 2. แปลง URL เป็น Link Card
-        htmlContent = formatLinks(htmlContent); 
-        
-        // ส่วน Feedback (ปรับตามของเดิมที่นัทมี)
-        const feedbackHtml = logId ? `
-            <div class="flex gap-2 mt-2 feedback-btn">
-                <button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md hover:bg-blue-100">👍 มีประโยชน์</button>
-                <button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md hover:bg-red-100">👎 ไม่ชัดเจน</button>
-            </div>` : '';
-
-        msgHtml = `
-        <div class="flex justify-start msg-animate">
-            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
-                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
-            </div>
-            <div class="flex flex-col items-start max-w-[85%] w-full">
-                <div class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full">
-                    ${htmlContent}
+                <div class="flex gap-3">
+                    <button onclick="closeLinkModal()" class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium rounded-xl transition-all">ยกเลิก</button>
+                    <a id="confirm-link-btn" href="#" target="_blank" onclick="closeLinkModal()" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all text-center">ไปที่ลิงก์</a>
                 </div>
-                ${feedbackHtml}
-                <span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span>
-            </div>
-        </div>`;
-    }
-    container.insertAdjacentHTML('beforeend', msgHtml);
-    scrollToBottom();
-}
-
-// แก้ไขฟังก์ชัน sendMessage ให้สมบูรณ์
-async function sendMessage() {
-    const message = inputField.value.trim();
-    if (!message) return;
-
-    inputField.value = '';
-    inputField.style.height = 'auto';
-    inputField.disabled = true;
-    sendBtn.disabled = true;
-
-    appendMessage(message, true);
-    stepIndicator.classList.remove('hidden');
-    scrollToBottom();
-
-    try {
-        const response = await fetch('chat_process.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
-        });
-        
-        const data = await response.json();
-        stepIndicator.classList.add('hidden');
-        appendMessage(data.response || 'ขออภัยครับ ระบบขัดข้อง', false, data.log_id);
-
-    } catch (error) {
-        stepIndicator.classList.add('hidden');
-        appendMessage('การเชื่อมต่อล้มเหลว ลองใหม่อีกครั้งครับ', false);
-    } finally {
-        inputField.disabled = false;
-        sendBtn.disabled = false;
-        inputField.focus();
-    }
-}
-// --- 4. Event Listeners และฟังก์ชันอื่นๆ ---
-function useSuggestion(text) {
-    if (inputField.disabled) return;
-    inputField.value = text;
-    autoResizeTextarea();
-    sendMessage();
-}
-
-inputField.addEventListener('input', autoResizeTextarea);
-
-inputField.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-function openImageModal(src) {
-    const modal = document.getElementById('image-modal');
-    const modalImg = document.getElementById('modal-img');
-    modalImg.src = src;
-    modal.classList.remove('opacity-0', 'pointer-events-none');
-}
-
-function closeImageModal() {
-    const modal = document.getElementById('image-modal');
-    modal.classList.add('opacity-0', 'pointer-events-none');
-}
-
-container.addEventListener('click', (e) => {
-    if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
-        openImageModal(e.target.src);
-    }
-});
-
-// จัดการเรื่อง TOS และปุ่ม Start
-const checkbox = document.getElementById('tos-checkbox');
-const startBtn = document.getElementById('start-btn');
-checkbox.addEventListener('change', () => {
-    startBtn.disabled = !checkbox.checked;
-    if (checkbox.checked) {
-        startBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all duration-300";
-    } else {
-        startBtn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
-    }
-});
-
-startBtn.addEventListener('click', closePopup);
-
-window.onload = () => {
-    aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
-    setTimeout(openPopup, 500);
-};
-</script>
-<div id="link-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-    <div id="link-modal-content" class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300">
-        <div class="text-center">
-            <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
-                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-gray-800 mb-2">ยืนยันการเปิดลิงก์ภายนอก</h3>
-            <p class="text-sm text-gray-500 mb-4">คุณต้องการออกจากหน้านี้เพื่อไปยังเว็บไซต์อื่นหรือไม่?</p>
-            
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-6 text-left">
-                <p id="target-link-display" class="text-xs text-blue-600 break-all line-clamp-2"></p>
-            </div>
-
-            <div class="flex gap-3">
-                <button onclick="closeLinkModal()" class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium rounded-xl transition-all">ยกเลิก</button>
-                <a id="confirm-link-btn" href="#" target="_blank" onclick="closeLinkModal()" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all text-center">ไปที่ลิงก์</a>
             </div>
         </div>
     </div>
-</div>
-<script> 
-// --- ส่วนควบคุม Link Confirmation Modal ---
-let pendingUrl = "";
 
-function openLinkModal(url) {
-    pendingUrl = url;
-    const modal = document.getElementById('link-modal');
-    const content = document.getElementById('link-modal-content');
-    const display = document.getElementById('target-link-display');
-    const confirmBtn = document.getElementById('confirm-link-btn');
-
-    display.textContent = url;
-    confirmBtn.href = url;
-
-    modal.classList.remove('opacity-0', 'pointer-events-none');
-    content.classList.replace('scale-95', 'scale-100');
-}
-
-function closeLinkModal() {
-    const modal = document.getElementById('link-modal');
-    const content = document.getElementById('link-modal-content');
-    
-    modal.classList.add('opacity-0', 'pointer-events-none');
-    content.classList.replace('scale-100', 'scale-95');
-}
-
-// แก้ไข Event Listener การคลิกใน container เพื่อดักจับลิงก์
-container.addEventListener('click', (e) => {
-    // 1. ตรวจสอบการคลิกรูปภาพ (ของเดิม)
-    if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
-        openImageModal(e.target.src);
-    }
-    
-    // 2. ตรวจสอบการคลิกลิงก์ (ของใหม่)
-    const link = e.target.closest('.ai-content a');
-    if (link) {
-        e.preventDefault(); // หยุดการเปิดลิงก์ทันที
-        const url = link.getAttribute('href');
-        openLinkModal(url); // เปิด Popup ยืนยันแทน
-    }
-});
-
-</script>
-    <div id="image-modal" class="fixed inset-0 z-[70] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none" onclick="closeImageModal()">
-    <div class="relative max-w-5xl w-full h-full flex items-center justify-center">
-        <img id="modal-img" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl transform scale-95">
-        <button class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
+    <div id="image-modal" class="fixed inset-0 z-[70] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeImageModal()">
+        <div class="relative max-w-5xl w-full h-full flex items-center justify-center">
+            <img id="modal-img" src="" class="max-w-full max-h-full object-contain rounded-lg transform scale-95 transition-transform duration-300">
+        </div>
     </div>
-</div>
 
+    <script>
+        marked.setOptions({ breaks: true, gfm: true });
+        
+        const inputField = document.getElementById('user-input');
+        const container = document.getElementById('chat-container');
+        const stepIndicator = document.getElementById('step-indicator');
+        const sendBtn = document.getElementById('send-btn');
+        const aiStatus = document.getElementById('ai-status');
+        let pendingUrl = "";
+
+        // --- 1. ฟังก์ชันจัดการหน้าจอ (Popup/Scroll) ---
+        function openPopup() { 
+            document.getElementById('credit-popup').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('popup-content').classList.replace('scale-95', 'scale-100');
+        }
+
+        function closePopup() { 
+            document.getElementById('credit-popup').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('popup-content').classList.replace('scale-100', 'scale-95');
+            setTimeout(() => inputField.focus(), 300);
+        }
+
+        function scrollToBottom() {
+            requestAnimationFrame(() => {
+                container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            });
+        }
+
+        function autoResizeTextarea() {
+            inputField.style.height = 'auto';
+            inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+        }
+
+        // --- 2. ฟังก์ชันหลักของระบบแชท ---
+        async function sendMessage() {
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            inputField.value = '';
+            inputField.style.height = 'auto';
+            inputField.disabled = true;
+            sendBtn.disabled = true;
+
+            appendMessage(message, true);
+            stepIndicator.classList.remove('hidden');
+            scrollToBottom();
+
+            try {
+                const response = await fetch('chat_process.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+                stepIndicator.classList.add('hidden');
+                appendMessage(data.response || 'ขออภัยครับ ระบบขัดข้อง', false, data.log_id);
+            } catch (error) {
+                stepIndicator.classList.add('hidden');
+                appendMessage('การเชื่อมต่อล้มเหลว ลองใหม่อีกครั้งครับ', false);
+            } finally {
+                inputField.disabled = false;
+                sendBtn.disabled = false;
+                inputField.focus();
+            }
+        }
+
+        function appendMessage(message, isUser = true, logId = null) {
+            const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            let msgHtml = '';
+            
+            if (isUser) {
+                msgHtml = `<div class="flex justify-end msg-animate w-full"><div class="flex flex-col items-end max-w-[85%]"><div class="bg-blue-600 text-white p-3.5 px-4 rounded-2xl rounded-br-none shadow-md text-sm md:text-base msg-text">${message}</div><span class="text-[10px] text-gray-400 mt-1 mr-1">${time}</span></div></div>`;
+            } else {
+                let htmlContent = marked.parse(message);
+                htmlContent = formatLinks(htmlContent); 
+                const feedbackHtml = logId ? `<div class="flex gap-2 mt-2 feedback-btn"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md hover:bg-blue-100">👍 มีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md hover:bg-red-100">👎 ไม่ชัดเจน</button></div>` : '';
+                msgHtml = `<div class="flex justify-start msg-animate"><div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden"><img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover"></div><div class="flex flex-col items-start max-w-[85%] w-full"><div class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full">${htmlContent}</div>${feedbackHtml}<span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span></div></div>`;
+            }
+            container.insertAdjacentHTML('beforeend', msgHtml);
+            scrollToBottom();
+        }
+
+        function formatLinks(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, (url) => `<div class="my-2"><a href="${url}" class="link-card hover:bg-blue-50 transition-all group"><div class="bg-blue-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div><div class="flex flex-col overflow-hidden"><span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Link</span><span class="text-blue-600 font-medium truncate text-xs md:text-sm">${url}</span></div></a></div>`);
+        }
+
+        async function sendFeedback(logId, rating, btnElement) {
+            const parent = btnElement.parentElement;
+            parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">กำลังบันทึก...</span>';
+            try {
+                const response = await fetch('update_feedback.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ log_id: Number(logId), rating: Number(rating) })
+                });
+                const result = await response.json();
+                parent.innerHTML = result.status === "success" ? '<span class="text-[10px] text-blue-500">ขอบคุณสำหรับ Feedback ครับ!</span>' : '<span class="text-[10px] text-red-500">เกิดข้อผิดพลาด</span>';
+            } catch (e) { 
+                parent.innerHTML = '<span class="text-[10px] text-red-500">การเชื่อมต่อล้มเหลว</span>';
+            }
+        }
+
+        // --- 3. ฟังก์ชันจัดการ Link & Image Modals ---
+        function openLinkModal(url) {
+            pendingUrl = url;
+            document.getElementById('target-link-display').textContent = url;
+            document.getElementById('confirm-link-btn').href = url;
+            document.getElementById('link-modal').classList.remove('opacity-0', 'pointer-events-none');
+            document.getElementById('link-modal-content').classList.replace('scale-95', 'scale-100');
+        }
+
+        function closeLinkModal() {
+            document.getElementById('link-modal').classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('link-modal-content').classList.replace('scale-100', 'scale-95');
+        }
+
+        function openImageModal(src) {
+            const modal = document.getElementById('image-modal');
+            document.getElementById('modal-img').src = src;
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        // --- 4. Event Listeners ---
+        inputField.addEventListener('input', autoResizeTextarea);
+        inputField.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+
+        container.addEventListener('click', (e) => {
+            const img = e.target.closest('.ai-content img');
+            if (img) openImageModal(img.src);
+            
+            const link = e.target.closest('.ai-content a');
+            if (link) { e.preventDefault(); openLinkModal(link.getAttribute('href')); }
+        });
+
+        function useSuggestion(text) { if (!inputField.disabled) { inputField.value = text; autoResizeTextarea(); sendMessage(); } }
+
+        // TOS & Start Logic
+        const checkbox = document.getElementById('tos-checkbox');
+        const startBtn = document.getElementById('start-btn');
+        checkbox.addEventListener('change', () => {
+            startBtn.disabled = !checkbox.checked;
+            startBtn.className = checkbox.checked ? "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all duration-300" : "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
+        });
+        startBtn.addEventListener('click', closePopup);
+
+        window.onload = () => {
+            aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
+            setTimeout(openPopup, 500);
+        };
+    </script>
 </body>
 </html>
