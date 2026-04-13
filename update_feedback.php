@@ -32,6 +32,11 @@ $success = @mysqli_real_connect($conn, $host, $user, $pass, $db, $port, NULL, MY
 if (!$success) {
     die(json_encode(["status" => "error", "message" => "DB Connection Failed"]));
 }
+// เพิ่มไว้ก่อนบรรทัด $log_id = ...
+$raw_input = file_get_contents('php://input');
+if (empty($raw_input)) {
+    die(json_encode(["status" => "error", "message" => "ไม่มีข้อมูลดิบส่งมาเลย (Raw input is empty)"]));
+}
 
 // 3. รับข้อมูลจากหน้าบ้าน (JSON)
 $input = file_get_contents('php://input');
