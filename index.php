@@ -34,6 +34,32 @@
             opacity: 0;
             animation: fadeIn 0.5s ease 0.5s forwards;
         }
+/* ตกแต่งลิงก์ให้ดูทันสมัย */
+.ai-content a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 2px solid #dbeafe;
+    transition: all 0.2s;
+    padding: 0 2px;
+}
+.ai-content a:hover {
+    background-color: #eff6ff;
+    border-bottom-color: #2563eb;
+    color: #1e40af;
+}
+/* สไตล์พิเศษสำหรับลิงก์ที่ต้องการให้ดูเหมือนปุ่ม (ถ้ามี) */
+.link-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin: 2px 0;
+    font-size: 0.85em;
+}
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -230,11 +256,18 @@ async function sendFeedback(logId, rating, btnElement) {
     }
 }
 
-// --- 3. ฟังก์ชันการส่งข้อความและแสดงผล ---
+function formatLinks(text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, function(url) {
+        // แสดงชื่อเว็บสั้นๆ หรือตัดคำให้ดูสะอาดตา
+        return `<a href="${url}" class="font-semibold text-blue-600 underline decoration-blue-200 underline-offset-4 hover:decoration-blue-600 transition-all">${url}</a>`;
+    });
+}
+
+
 function appendMessage(message, isUser = true, logId = null) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     let msgHtml = '';
-
     if (isUser) {
         msgHtml = `
         <div class="flex justify-end msg-animate w-full">
@@ -244,16 +277,11 @@ function appendMessage(message, isUser = true, logId = null) {
             </div>
         </div>`;
     } else {
-        const markdownMessage = marked.parse(message);
-        const feedbackHtml = logId ? `
-            <div class="flex gap-2 mt-2 feedback-btn">
-                <button onclick="sendFeedback(${logId}, 1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                </button>
-                <button onclick="sendFeedback(${logId}, -1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
-                </button>
-            </div>` : '';
+        // --- แก้ไขตรงนี้: จัดการลิงก์ก่อนส่งไป Marked ---
+        const formattedMessage = formatLinks(message); 
+        const markdownMessage = marked.parse(formattedMessage);
+        
+        const feedbackHtml = logId ? `...โค้ด Feedback เหมือนเดิม...` : '';
 
         msgHtml = `
         <div class="flex justify-start msg-animate">
@@ -361,6 +389,70 @@ window.onload = () => {
     setTimeout(openPopup, 500);
 };
 </script>
+<div id="link-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="link-modal-content" class="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl transform scale-95 transition-transform duration-300">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">ยืนยันการเปิดลิงก์ภายนอก</h3>
+            <p class="text-sm text-gray-500 mb-4">คุณต้องการออกจากหน้านี้เพื่อไปยังเว็บไซต์อื่นหรือไม่?</p>
+            
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 mb-6 text-left">
+                <p id="target-link-display" class="text-xs text-blue-600 break-all line-clamp-2"></p>
+            </div>
 
+            <div class="flex gap-3">
+                <button onclick="closeLinkModal()" class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium rounded-xl transition-all">ยกเลิก</button>
+                <a id="confirm-link-btn" href="#" target="_blank" onclick="closeLinkModal()" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all text-center">ไปที่ลิงก์</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script> 
+// --- ส่วนควบคุม Link Confirmation Modal ---
+let pendingUrl = "";
+
+function openLinkModal(url) {
+    pendingUrl = url;
+    const modal = document.getElementById('link-modal');
+    const content = document.getElementById('link-modal-content');
+    const display = document.getElementById('target-link-display');
+    const confirmBtn = document.getElementById('confirm-link-btn');
+
+    display.textContent = url;
+    confirmBtn.href = url;
+
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    content.classList.replace('scale-95', 'scale-100');
+}
+
+function closeLinkModal() {
+    const modal = document.getElementById('link-modal');
+    const content = document.getElementById('link-modal-content');
+    
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    content.classList.replace('scale-100', 'scale-95');
+}
+
+// แก้ไข Event Listener การคลิกใน container เพื่อดักจับลิงก์
+container.addEventListener('click', (e) => {
+    // 1. ตรวจสอบการคลิกรูปภาพ (ของเดิม)
+    if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
+        openImageModal(e.target.src);
+    }
+    
+    // 2. ตรวจสอบการคลิกลิงก์ (ของใหม่)
+    const link = e.target.closest('.ai-content a');
+    if (link) {
+        e.preventDefault(); // หยุดการเปิดลิงก์ทันที
+        const url = link.getAttribute('href');
+        openLinkModal(url); // เปิด Popup ยืนยันแทน
+    }
+});
+
+</script>
 </body>
 </html>
