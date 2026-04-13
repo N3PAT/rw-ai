@@ -261,7 +261,7 @@
     function appendMessage(message, isUser = true, logId = null) {
         const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
         let htmlContent = isUser ? message : formatLinks(marked.parse(message));
-        const feedback = (!isUser && logId) ? `<div class="flex gap-2 mt-2"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">👍 มีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">👎 ไม่ชัดเจน</button></div>` : '';
+        const feedback = (!isUser && logId) ? `<div class="flex gap-2 mt-2"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคมีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคไม่ชัดเจน</button></div>` : '';
 
         const msgHtml = `<div class="flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate w-full">
             ${!isUser ? '<div class="w-8 h-8 rounded-full mr-2 self-end mb-1 shrink-0 overflow-hidden border border-blue-200"><img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover"></div>' : ''}
