@@ -425,6 +425,10 @@ function useSuggestion(text) {
     autoResizeTextarea();
     sendMessage();
 }
+function autoResizeTextarea() {
+    inputField.style.height = 'auto';
+    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+}
 
 </script>
 </body>
