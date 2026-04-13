@@ -197,8 +197,7 @@ function scrollToBottom() {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     });
 }
-
-// 🛡️ [UPDATE] ฟังก์ชันส่ง Feedback 👍/👎
+// 🛡️ [UPDATE] ฟังก์ชันส่ง Feedback 👍/👎 (แก้ไขเพื่อให้ PHP รับค่าได้)
 async function sendFeedback(logId, rating, btnElement) {
     if (!logId) return;
     
@@ -209,11 +208,19 @@ async function sendFeedback(logId, rating, btnElement) {
     try {
         await fetch('update_feedback.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ log_id: logId, rating: rating })
+            headers: { 
+                'Content-Type': 'application/json' // 🌟 เพิ่มบรรทัดนี้ครับ สำคัญมาก!
+            },
+            body: JSON.stringify({ 
+                log_id: parseInt(logId), 
+                rating: parseInt(rating) 
+            })
         });
-    } catch (e) { console.error("Feedback Error:", e); }
+    } catch (e) { 
+        console.error("Feedback Error:", e); 
+    }
 }
+
 
 function appendMessage(message, isUser = true, logId = null) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
