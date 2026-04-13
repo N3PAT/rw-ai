@@ -340,34 +340,29 @@ function autoResizeTextarea() {
 }
 
 function processVisuals(element) {
-    let text = element.innerHTML;
-    
-    // 1. จัดการแผนผัง [SHOW_MAP] (เหมือนเดิม)
+    // 1. กวาดล้างเศษโค้ดที่ AI ชอบแถมมา (เช่น ')"> หรือ ">)
+    let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
+
+    // 2. จัดการแผนผัง [SHOW_MAP]
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     if (text.includes('[SHOW_MAP]')) {
         const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
         text = text.replace('[SHOW_MAP]', imgHtml);
     }
 
-    // 2. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
+    // 3. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
-        const cleanUrl = url.replace(/<[^>]*>?/gm, '').trim();
+        const cleanUrl = url.replace(/<[^>]*>?/gm, '').replace(/\s+/g, '').trim();
         return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
     });
 
-    // 3. จัดการลิงก์ (ฉบับปรับปรุง: ป้องกันการเบิ้ล)
-    // เราจะหา URL ที่ "ไม่ได้" อยู่ใน Tag <a> หรือ <img>
+    // 4. จัดการลิงก์ (ฉบับสมบูรณ์)
     const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
-    
     text = text.replace(urlRegex, (url) => {
         const cleanUrl = url.trim();
-        // ถ้าเป็นไฟล์รูปภาพ (ที่อาจจะหลุดมา) ให้ทำเป็นรูป
-        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
-            return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
-        }
+        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return cleanUrl; // ปล่อยให้ img tag จัดการ
         
-        // ถ้าเป็นลิงก์ทั่วไป ให้ทำเป็น Link Card สวยๆ
         return `
         <div class="my-2">
             <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
@@ -384,6 +379,7 @@ function processVisuals(element) {
 
     element.innerHTML = text;
 }
+
 
 
 
