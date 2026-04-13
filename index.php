@@ -233,7 +233,14 @@
             return `<div class="my-2"><a href="${url}" class="link-card group"><div class="bg-blue-600 p-2 rounded-lg text-white"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></div><div class="flex flex-col overflow-hidden"><span class="text-[9px] text-gray-400 font-bold uppercase">Link</span><span class="text-blue-600 text-xs truncate">${url}</span></div></a></div>`;
         });
     }
-
+function autoResizeTextarea() {
+    const inputField = document.getElementById('user-input');
+    if (inputField) {
+        inputField.style.height = 'auto'; // รีเซ็ตความสูงก่อนคำนวณใหม่
+        // ปรับความสูงตามเนื้อหาจริง แต่ไม่เกิน 128px
+        inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+    }
+}
     async function sendMessage() {
         const message = inputField.value.trim();
         if (!message) return;
