@@ -227,25 +227,18 @@
     function scrollToBottom() { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }
 
     function formatLinks(text) {
-    // 1. ลบช่องว่างหรือการขึ้นบรรทัดใหม่ที่ AI อาจจะแอบใส่มาในลิงก์ (ช่วยแก้ปัญหาลิงก์ขาด)
-    // หา URL ที่อาจจะโดนตัดบรรทัด .pn \n g แล้วต่อให้ติดกัน
-    let cleanedText = text.replace(/(https?:\/\/[^\s<"']+)\s*\n\s*([^\s<"']+)/gi, '$1$2');
-
-    // 2. Regex สำหรับรูปภาพ
-    const imgRegex = /(https?:\/\/[^\s<"']+\.(?:png|jpg|jpeg|gif|webp|svg))/gi;
+    // 1. จัดการรูปภาพที่อยู่ใน [IMG]...[/IMG]
+    const customImgRegex = /\[IMG\]\s*([\s\S]*?)\s*\[\/IMG\]/gi;
     
-    // 3. Regex สำหรับลิงก์ทั่วไป
-    const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg)))/gi;
-
-    let processed = cleanedText;
-
-    // --- จัดการรูปภาพก่อน ---
-    processed = processed.replace(imgRegex, (imgUrl) => {
-        const cleanUrl = imgUrl.trim();
-        return `<div class="my-2"><img src="${cleanUrl}" class="max-w-full rounded-lg shadow-md cursor-zoom-in border border-gray-200" onclick="openImageModal('${cleanUrl}')" onerror="this.style.display='none'"></div>`;
+    let processed = text.replace(customImgRegex, (match, url) => {
+        // ล้างช่องว่างหรือการขึ้นบรรทัดใหม่ที่ AI แอบใส่มาใน URL
+        const cleanUrl = url.replace(/\s+/g, '').trim();
+        return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')" onerror="this.parentElement.innerHTML='<p class=\"text-xs text-red-500\">ไม่สามารถโหลดรูปภาพได้</p>'"></div>`;
     });
 
-    // --- ค่อยจัดการลิงก์ที่เหลือเป็น Card ---
+    // 2. จัดการลิงก์อื่นๆ ที่เหลือ (ที่ไม่ใช่รูปภาพ)
+    const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg)))/gi;
+    
     processed = processed.replace(urlRegex, (url) => {
         const cleanUrl = url.trim();
         // ถ้าเป็นส่วนหนึ่งของ tag HTML อยู่แล้ว ไม่ต้องยุ่ง
@@ -267,6 +260,7 @@
 
     return processed;
 }
+
 
 
 
