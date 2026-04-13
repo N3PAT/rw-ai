@@ -148,6 +148,7 @@ if (preg_match($keywords['buildings'], $userMessageRaw)) {
         }
     }
 }
+$isTravel = preg_match('/(เดินทาง|ไปโรงเรียน|รถเมล์|รถไฟฟ้า|bts|ไปยังไง|ที่ตั้ง|สายรถ)/ui', $userMessageRaw);
 
 if (preg_match($keywords['rules'], $userMessageRaw)) {
     $res = $conn->query("SELECT category, description, punishment FROM school_rules");
