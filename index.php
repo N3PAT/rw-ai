@@ -241,11 +241,18 @@ function autoResizeTextarea() {
         inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
     }
 }
-    async function sendMessage() {
+        async function sendMessage() {
         const message = inputField.value.trim();
-        if (!message) return;
+        // เช็คว่าถ้าไม่มีข้อความ หรือปุ่มกำลังปิดอยู่ (ส่งซ้ำ) ให้หยุดทำงาน
+        if (!message || sendBtn.disabled) return;
+
+        // เริ่มล็อคปุ่มและช่องพิมพ์
+        sendBtn.disabled = true;
+        inputField.disabled = true;
+        
         inputField.value = '';
-        inputField.style.height = 'auto';
+        autoResizeTextarea(); // เรียกใช้เพื่อให้ช่องหดกลับมา 1 บรรทัด
+        
         appendMessage(message, true);
         stepIndicator.classList.remove('hidden');
         scrollToBottom();
@@ -262,6 +269,11 @@ function autoResizeTextarea() {
         } catch (e) {
             stepIndicator.classList.add('hidden');
             appendMessage('เชื่อมต่อล้มเหลว', false);
+        } finally {
+            // ปลดล็อคปุ่มและช่องพิมพ์เสมอ ไม่ว่าจะส่งสำเร็จหรือล้มเหลว
+            sendBtn.disabled = false;
+            inputField.disabled = false;
+            inputField.focus(); // ให้ Cursor กลับมาที่ช่องพิมพ์พร้อมพิมพ์ต่อ
         }
     }
 
