@@ -227,50 +227,31 @@
     function scrollToBottom() { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }
 
     function formatLinks(text) {
-    // 1. Regex สำหรับหา URL ทั่วไป (ข้าม URL ที่ลงท้ายด้วยไฟล์รูปภาพ .png, .jpg, .jpeg, .gif)
-    const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif)))/g;
+    // Regex หา URL ทั่วไปที่ไม่ใช่รูปภาพ
+    const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
     
-    // 2. Regex สำหรับหา URL ที่เป็นรูปภาพโดยเฉพาะ (.png, .jpg, .jpeg, .gif)
-    const imageRegex = /(https?:\/\/[^\s<"']+\.(?:png|jpg|jpeg|gif))/g;
-
-    // ทำการ Replace 2 รอบ
-    let formattedText = text;
-
-    // รอบแรก: แปลง URL ทั่วไปให้เป็น Link Card (กล่องสีฟ้า)
-    formattedText = formattedText.replace(urlRegex, (url) => {
-        // เช็คเผื่อว่าถ้า URL นี้เป็นส่วนหนึ่งของ HTML Tag อยู่แล้ว (เช่น href="..." หรือ src="...") ให้คืนค่าเดิม
+    return text.replace(urlRegex, (url) => {
+        // ถ้าเป็นส่วนหนึ่งของ tag HTML อยู่แล้ว (เช่น src="..." หรือ href="...") ไม่ต้องยุ่ง
         if (text.includes(`src="${url}"`) || text.includes(`href="${url}"`)) {
             return url;
         }
         
-        // ถ้าเป็น URL เปล่าๆ ให้ทำเป็น Card สวยๆ
+        // แปลงเป็น Link Card
         return `
         <div class="my-2">
             <a href="${url}" class="link-card hover:bg-blue-50 transition-all group">
-                <div class="bg-blue-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                 </div>
                 <div class="flex flex-col overflow-hidden">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Link</span>
-                    <span class="text-blue-600 font-medium truncate text-xs md:text-sm">${url}</span>
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
+                    <span class="text-blue-600 font-medium truncate text-xs">${url}</span>
                 </div>
             </a>
         </div>`;
     });
-
-    // รอบที่สอง: แปลง URL ที่เป็นรูปภาพให้กลายเป็น HTML Tag <img> ทันที
-    formattedText = formattedText.replace(imageRegex, (imageUrl) => {
-        // เช็คเผื่อว่าถ้า URL นี้เป็นส่วนหนึ่งของ HTML Tag อยู่แล้ว (เช่น src="...") ให้คืนค่าเดิม
-        if (text.includes(`src="${imageUrl}"`)) {
-            return imageUrl;
-        }
-        
-        // ถ้าเป็น URL รูปภาพเปล่าๆ ให้ทำเป็น Tag <img> เพื่อแสดงรูป
-        return `<img src="${imageUrl}" alt="รูปภาพจาก AI" class="max-w-full rounded-lg shadow-md my-2 cursor-zoom-in" onclick="openImageModal('${imageUrl}')">`;
-    });
-
-    return formattedText;
 }
+
 
 function autoResizeTextarea() {
     const inputField = document.getElementById('user-input');
@@ -315,23 +296,36 @@ function autoResizeTextarea() {
 
 
     function appendMessage(message, isUser = true, logId = null) {
-        const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-        let htmlContent = isUser ? message : formatLinks(marked.parse(message));
-        const feedback = (!isUser && logId) ? `<div class="flex gap-2 mt-2"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคมีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคไม่ชัดเจน</button></div>` : '';
-
-        const msgHtml = `<div class="flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate w-full">
-            ${!isUser ? '<div class="w-8 h-8 rounded-full mr-2 self-end mb-1 shrink-0 overflow-hidden border border-blue-200"><img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover"></div>' : ''}
-            <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%]">
-                <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-100'} p-3.5 px-4 rounded-2xl text-sm ai-content">
-                    ${htmlContent}
-                </div>
-                ${feedback}
-                <span class="text-[10px] text-gray-400 mt-1">${time}</span>
-            </div>
-        </div>`;
-        container.insertAdjacentHTML('beforeend', msgHtml);
-        scrollToBottom();
+    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    
+    // --- แก้ไขตรงก้อนนี้ ---
+    let htmlContent;
+    if (isUser) {
+        htmlContent = message;
+    } else {
+        // 1. จัดการลิงก์ให้เป็น Card ก่อน (แต่ข้ามไฟล์ภาพ)
+        let processedText = formatLinks(message);
+        // 2. แปลง Markdown (รวมถึงรูปภาพที่ AI ส่งมาแบบ Markdown)
+        htmlContent = marked.parse(processedText);
     }
+    // -----------------------
+
+    const feedback = (!isUser && logId) ? `<div class="flex gap-2 mt-2"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคมีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคไม่ชัดเจน</button></div>` : '';
+
+    const msgHtml = `<div class="flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate w-full">
+        ${!isUser ? '<div class="w-8 h-8 rounded-full mr-2 self-end mb-1 shrink-0 overflow-hidden border border-blue-200"><img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover"></div>' : ''}
+        <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%]">
+            <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-100'} p-3.5 px-4 rounded-2xl text-sm ai-content">
+                ${htmlContent}
+            </div>
+            ${feedback}
+            <span class="text-[10px] text-gray-400 mt-1">${time}</span>
+        </div>
+    </div>`;
+    container.insertAdjacentHTML('beforeend', msgHtml);
+    scrollToBottom();
+}
+
 
     async function sendFeedback(logId, rating, btn) {
         btn.parentElement.innerHTML = '<span class="text-[10px] text-blue-500">ขอบคุณครับ!</span>';
