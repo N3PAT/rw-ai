@@ -90,6 +90,21 @@
             <div class="w-12 h-1 bg-blue-500 mx-auto rounded-full mb-4"></div>
             <p class="text-sm md:text-base text-gray-600 mb-4">พัฒนาโดย ศิษย์เก่า<br><strong class="text-gray-800 text-lg">นาย ณัฏฐพัชร อินแสงจันทร์</strong><br><span class="inline-block mt-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">รุ่น 78</span></p>
             <label class="flex items-center justify-center gap-2 mb-5 cursor-pointer group">
+                <a href="นโยบายการใช้เทคโนโลยี Generative AI ที่ยอมรับได้ (2).pdf" id="tos-link" class="block">
+    <div id="tos-box"
+        class="text-left bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 text-xs text-gray-600 h-24 overflow-y-auto shadow-inner cursor-pointer hover:bg-gray-100 transition">
+
+        <p class="font-bold text-gray-800 mb-2">
+            ข้อตกลงการใช้งาน (Terms of Service)
+        </p>
+
+        <p class="text-gray-600">
+            กรุณาคลิกเพื่ออ่านรายละเอียดข้อตกลงฉบับเต็ม
+        </p>
+
+    </div>
+</a>
+
                 <input type="checkbox" id="tos-checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer">
                 <span class="text-sm text-gray-700">ฉันอ่านและยอมรับข้อตกลงการใช้งาน</span>
             </label>
@@ -314,5 +329,95 @@ window.onload = () => setTimeout(openPopup, 100);
         }
     }
     </script>
+    <script>
+    const box = document.getElementById('tos-box');
+    const linkBox = document.getElementById('tos-link');
+    const checkbox = document.getElementById('tos-checkbox');
+    const btn = document.getElementById('start-btn');
+
+    let unlocked = false;
+
+    box.addEventListener('scroll', () => {
+        const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 5;
+
+        if (atBottom) {
+            unlocked = true;
+            linkBox.classList.remove('pointer-events-none', 'opacity-50', 'cursor-not-allowed');
+            linkBox.classList.add('opacity-100', 'cursor-pointer');
+        }
+    });
+
+    linkBox.addEventListener('click', () => {
+        if (!unlocked) return;
+        window.location.href = 'privacy_policy.php';
+    });
+
+    checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+            btn.disabled = false;
+            btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all duration-300";
+        } else {
+            btn.disabled = true;
+            btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
+        }
+    });
+
+    btn.addEventListener('click', () => {
+        if (!checkbox.checked) return;
+        closePopup();
+    });
+    </script>
+    <script>// ฟังก์ชันเปิด Modal ขยายรูป
+function openImageModal(src) {
+    const modal = document.getElementById('image-modal');
+    const modalImg = document.getElementById('modal-img');
+    
+    modalImg.src = src;
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    
+    setTimeout(() => {
+        modalImg.classList.remove('scale-95');
+        modalImg.classList.add('scale-100');
+    }, 10);
+}
+
+// ฟังก์ชันปิด Modal
+function closeImageModal() {
+    const modal = document.getElementById('image-modal');
+    const modalImg = document.getElementById('modal-img');
+    
+    modalImg.classList.remove('scale-100');
+    modalImg.classList.add('scale-95');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    
+    setTimeout(() => {
+        modalImg.src = '';
+    }, 300);
+}
+
+// เพิ่ม Event Listener ให้กับรูปภาพที่เกิดขึ้นใน Chat Container
+container.addEventListener('click', function(e) {
+    // ถ้าสิ่งที่คลิกคือรูปภาพ (img) ที่อยู่ในกล่องข้อความ AI
+    if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
+        openImageModal(e.target.src);
+    }
+});
+</script>
+<div id="image-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeImageModal()">
+    <button class="absolute top-5 right-5 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <img id="modal-img" src="" class="max-w-[95%] max-h-[90dvh] rounded-lg shadow-2xl object-contain scale-95 transition-transform duration-300" alt="Full Preview">
+</div>
+<script>
+  // ฟังก์ชันสำหรับใช้คำถามแนะนำ
+function useSuggestion(text) {
+    if (inputField.disabled) return; // ป้องกันการกดซ้ำขณะ AI กำลังตอบ
+    inputField.value = text;
+    autoResizeTextarea();
+    sendMessage();
+}
+
+</script>
 </body>
 </html>
