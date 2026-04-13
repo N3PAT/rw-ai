@@ -87,7 +87,7 @@ $context = [
 
 // เตรียม Keyword เช็ค (รวมไว้ที่เดียวให้จัดการง่าย)
 $isSong = preg_match('/(เพลง|มาร์ช|ร้องเพลง|ทำนอง)/u', $userMessageRaw);
-$isHistory = preg_match('/(ประวัติ|ก่อตั้ง|ปีที่|หลวงเทวฤทธิ์|ลูกเสืออากาศ​)/u', $userMessageRaw);
+$isHistory = preg_match('/(ประวัติ|ก่อตั้ง|ปีที่|หลวงเทวฤทธิ์|ลูกเสืออากาศ​|ที่อยู่|ตำแหน่ง)/u', $userMessageRaw);
 // ค้นหาบรรทัด $isFinance แล้วเปลี่ยนเป็น:
 $isFinance = preg_match('/(ค่าเทอม|จ่ายเงิน|การเงิน|ราคา|กี่บาท|เสียเงิน|ชำระเงิน)/u', $userMessageRaw);
 
