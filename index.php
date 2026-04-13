@@ -157,6 +157,8 @@
         <div id="suggestions" class="flex overflow-x-auto pb-3 gap-2 no-select scrollbar-hide">
             <button onclick="useSuggestion('ระเบียบการแต่งกายนักเรียนเป็นอย่างไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">ระเบียบการแต่งกาย</button>
             <button onclick="useSuggestion('ขอแผนผังโรงเรียนหน่อยได้ไหม?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">แผนผังโรงเรียน</button>
+            <button onclick="useSuggestion('ขอเนื้อเพลงมาร์ช​โรงเรียนหน่อย?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">เพลงมาร์ชโรงเรียน</button>
+            <button onclick="useSuggestion('สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียนคืออะไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียน</button>
         </div>
 
         <div class="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-blue-400 focus-within:bg-white transition-all">
