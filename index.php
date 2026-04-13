@@ -170,15 +170,15 @@
     </footer>
 </div>
 
-<script>
+        <script>
 marked.setOptions({ breaks: true, gfm: true });
 const inputField = document.getElementById('user-input');
 const container = document.getElementById('chat-container');
 const stepIndicator = document.getElementById('step-indicator');
-const stepText = document.getElementById('step-text');
 const sendBtn = document.getElementById('send-btn');
 const aiStatus = document.getElementById('ai-status');
 
+// --- 1. ฟังก์ชันจัดการหน้าจอ (Popup/Scroll) ---
 function openPopup() { 
     document.getElementById('credit-popup').classList.remove('opacity-0', 'pointer-events-none');
     document.getElementById('popup-content').classList.replace('scale-95', 'scale-100');
@@ -190,31 +190,21 @@ function closePopup() {
     setTimeout(() => inputField.focus(), 300);
 }
 
-aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
-
 function scrollToBottom() {
     requestAnimationFrame(() => {
         container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
     });
 }
+
+function autoResizeTextarea() {
+    inputField.style.height = 'auto';
+    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+}
+
+// --- 2. ฟังก์ชันส่ง Feedback (ย้ายออกมาข้างนอกให้เป็นอิสระ) ---
 async function sendFeedback(logId, rating, btnElement) {
-
-
-
-
-function appendMessage(message, isUser = true, logId = null) {
-    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    let msgHtml = '';
-
-    if (isUser) {
-        msgHtml = `
-    async function sendFeedback(logId, rating, btnElement) {
-    if (!logId) {
-        console.error("Missing Log ID");
-        return;
-    }
+    if (!logId) return;
     
-    // แสดง UI ว่ารับทราบแล้ว
     const parent = btnElement.parentElement;
     const originalContent = parent.innerHTML;
     parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">กำลังบันทึก...</span>';
@@ -222,9 +212,7 @@ function appendMessage(message, isUser = true, logId = null) {
     try {
         const response = await fetch('update_feedback.php', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 log_id: Number(logId), 
                 rating: Number(rating) 
@@ -232,20 +220,24 @@ function appendMessage(message, isUser = true, logId = null) {
         });
 
         const result = await response.json();
-        console.log("Server Response:", result); // ดูผลลัพธ์ใน F12 Console
-
         if (result.status === "success") {
             parent.innerHTML = '<span class="text-[10px] text-blue-500">ขอบคุณสำหรับ Feedback ครับ!</span>';
         } else {
-            // ถ้า Error ให้แสดงข้อความจาก Server
             parent.innerHTML = `<span class="text-[10px] text-red-500">ผิดพลาด: ${result.message}</span>`;
         }
     } catch (e) { 
-        console.error("Network Error:", e);
-        parent.innerHTML = originalContent; // ถ้าพังให้กลับไปเป็นปุ่มเดิม
+        parent.innerHTML = '<span class="text-[10px] text-red-500">การเชื่อมต่อล้มเหลว</span>';
     }
 }
-    <div class="flex justify-end msg-animate w-full">
+
+// --- 3. ฟังก์ชันการส่งข้อความและแสดงผล ---
+function appendMessage(message, isUser = true, logId = null) {
+    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    let msgHtml = '';
+
+    if (isUser) {
+        msgHtml = `
+        <div class="flex justify-end msg-animate w-full">
             <div class="flex flex-col items-end max-w-[85%]">
                 <div class="bg-blue-600 text-white p-3.5 px-4 rounded-2xl rounded-br-none shadow-md text-sm md:text-base msg-text">${message}</div>
                 <span class="text-[10px] text-gray-400 mt-1 mr-1">${time}</span>
@@ -253,7 +245,6 @@ function appendMessage(message, isUser = true, logId = null) {
         </div>`;
     } else {
         const markdownMessage = marked.parse(message);
-        // เพิ่มส่วนปุ่ม Feedback ถ้าไม่ใช่ข้อความจาก User
         const feedbackHtml = logId ? `
             <div class="flex gap-2 mt-2 feedback-btn">
                 <button onclick="sendFeedback(${logId}, 1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-400">
@@ -262,8 +253,7 @@ function appendMessage(message, isUser = true, logId = null) {
                 <button onclick="sendFeedback(${logId}, -1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
                 </button>
-            </div>
-        ` : '';
+            </div>` : '';
 
         msgHtml = `
         <div class="flex justify-start msg-animate">
@@ -305,13 +295,11 @@ async function sendMessage() {
         
         const data = await response.json();
         stepIndicator.classList.add('hidden');
-        
-        // 🛡️ [UPDATE] นำ response และ log_id ที่ได้จาก PHP มาแสดง
-        appendMessage(data.response || 'พี่ขอโทษครับ ระบบขัดข้องชั่วคราว', false, data.log_id);
+        appendMessage(data.response || 'ขออภัยครับ ระบบขัดข้อง', false, data.log_id);
 
     } catch (error) {
         stepIndicator.classList.add('hidden');
-        appendMessage('ระบบเชื่อมต่อล้มเหลว หรือน้องถามเร็วเกินไปครับ ลองใหม่อีกครั้งนะ', false);
+        appendMessage('การเชื่อมต่อล้มเหลว ลองใหม่อีกครั้งครับ', false);
     } finally {
         inputField.disabled = false;
         sendBtn.disabled = false;
@@ -319,16 +307,15 @@ async function sendMessage() {
     }
 }
 
+// --- 4. Event Listeners และฟังก์ชันอื่นๆ ---
 function useSuggestion(text) {
     if (inputField.disabled) return;
     inputField.value = text;
+    autoResizeTextarea();
     sendMessage();
 }
 
-inputField.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 128) + 'px';
-});
+inputField.addEventListener('input', autoResizeTextarea);
 
 inputField.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -337,117 +324,43 @@ inputField.addEventListener('keydown', (e) => {
     }
 });
 
-window.onload = () => setTimeout(openPopup, 100);
-</script>
-    <script>
-    function toggleStartButton() {
-        const checkbox = document.getElementById('tos-checkbox');
-        const btn = document.getElementById('start-btn');
-        
-        if (checkbox.checked) {
-            // เมื่อติ๊กยอมรับ ให้เปิดใช้งานปุ่มและเปลี่ยนสีเป็นสีน้ำเงิน
-            btn.disabled = false;
-            btn.className = "w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] duration-300 cursor-pointer";
-        } else {
-            // เมื่อเอาติ๊กออก ให้ล็อกปุ่มและเปลี่ยนเป็นสีเทา
-            btn.disabled = true;
-            btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
-        }
-    }
-    </script>
-    <script>
-    const box = document.getElementById('tos-box');
-    const linkBox = document.getElementById('tos-link');
-    const checkbox = document.getElementById('tos-checkbox');
-    const btn = document.getElementById('start-btn');
-
-    let unlocked = false;
-
-    box.addEventListener('scroll', () => {
-        const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 5;
-
-        if (atBottom) {
-            unlocked = true;
-            linkBox.classList.remove('pointer-events-none', 'opacity-50', 'cursor-not-allowed');
-            linkBox.classList.add('opacity-100', 'cursor-pointer');
-        }
-    });
-
-    linkBox.addEventListener('click', () => {
-        if (!unlocked) return;
-        window.location.href = 'privacy_policy.php';
-    });
-
-    checkbox.addEventListener('change', () => {
-        if (checkbox.checked) {
-            btn.disabled = false;
-            btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all duration-300";
-        } else {
-            btn.disabled = true;
-            btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
-        }
-    });
-
-    btn.addEventListener('click', () => {
-        if (!checkbox.checked) return;
-        closePopup();
-    });
-    </script>
-    <script>// ฟังก์ชันเปิด Modal ขยายรูป
 function openImageModal(src) {
     const modal = document.getElementById('image-modal');
     const modalImg = document.getElementById('modal-img');
-    
     modalImg.src = src;
     modal.classList.remove('opacity-0', 'pointer-events-none');
-    
-    setTimeout(() => {
-        modalImg.classList.remove('scale-95');
-        modalImg.classList.add('scale-100');
-    }, 10);
 }
 
-// ฟังก์ชันปิด Modal
 function closeImageModal() {
     const modal = document.getElementById('image-modal');
-    const modalImg = document.getElementById('modal-img');
-    
-    modalImg.classList.remove('scale-100');
-    modalImg.classList.add('scale-95');
     modal.classList.add('opacity-0', 'pointer-events-none');
-    
-    setTimeout(() => {
-        modalImg.src = '';
-    }, 300);
 }
 
-// เพิ่ม Event Listener ให้กับรูปภาพที่เกิดขึ้นใน Chat Container
-container.addEventListener('click', function(e) {
-    // ถ้าสิ่งที่คลิกคือรูปภาพ (img) ที่อยู่ในกล่องข้อความ AI
+container.addEventListener('click', (e) => {
     if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
         openImageModal(e.target.src);
     }
 });
-</script>
-<div id="image-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeImageModal()">
-    <button class="absolute top-5 right-5 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-    </button>
-    <img id="modal-img" src="" class="max-w-[95%] max-h-[90dvh] rounded-lg shadow-2xl object-contain scale-95 transition-transform duration-300" alt="Full Preview">
-</div>
-<script>
-  // ฟังก์ชันสำหรับใช้คำถามแนะนำ
-function useSuggestion(text) {
-    if (inputField.disabled) return; // ป้องกันการกดซ้ำขณะ AI กำลังตอบ
-    inputField.value = text;
-    autoResizeTextarea();
-    sendMessage();
-}
-function autoResizeTextarea() {
-    inputField.style.height = 'auto';
-    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
-}
 
+// จัดการเรื่อง TOS และปุ่ม Start
+const checkbox = document.getElementById('tos-checkbox');
+const startBtn = document.getElementById('start-btn');
+checkbox.addEventListener('change', () => {
+    startBtn.disabled = !checkbox.checked;
+    if (checkbox.checked) {
+        startBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all duration-300";
+    } else {
+        startBtn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
+    }
+});
+
+startBtn.addEventListener('click', closePopup);
+
+window.onload = () => {
+    aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
+    setTimeout(openPopup, 500);
+};
 </script>
+
 </body>
 </html>
