@@ -108,37 +108,55 @@ $context
 คำตอบจากพี่ RW-AI:";
 
 // --- 5. AI API CALL ---
-function callGeminiAPI($apiUrl, $payload) {
-    $ch = curl_init($apiUrl);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode($payload),
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-        CURLOPT_SSL_VERIFYPEER => false,
-        CURLOPT_TIMEOUT        => 25,
-        CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4
-    ]);
-    $res = curl_exec($ch);
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    return ['success' => ($code === 200), 'body' => $res, 'httpCode' => $code];
-}
+$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$config['gemini']['model']}:generateContent?key=" . urlencode((string)$config['gemini']['api_key']);
+$payload = [
+    "contents" => [["parts" => [["text" => $prompt]]]], 
+    "generationConfig" => [
+        "temperature" => 0.1, 
+        "maxOutputTokens" => 1024
+    ]
+];
 
-$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . $config['gemini']['model'] . ":generateContent?key=" . $config['gemini']['api_key'];
-$payload = ["contents" => [["parts" => [["text" => $prompt]]]]];
-
+$success = false;
+$retryCount = 0;
 $aiResponse = "";
-$isOk = false;
+$httpCode = 0;
 
-for ($i = 0; $i < 2; $i++) {
-    $res = callGeminiAPI($apiUrl, $payload);
-    if ($res['success']) {
-        $data = json_decode($res['body'], true);
-        $aiResponse = $data['candidates'][0]['content']['parts'][0]['text'] ?? "";
-        if ($aiResponse) { $isOk = true; break; }
+while (!$success && $retryCount < 2) {
+    $ch = curl_init($apiUrl);
+    
+    // ตั้งค่า cURL Options
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+    
+    // หากโฮสติ้งมีปัญหาเรื่อง SSL Certificate ให้ปลดคอมเมนต์ 2 บรรทัดข้างล่างนี้ (แต่ถ้าใช้ได้ปกติก็ไม่ต้อง)
+    // curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    // curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+    $rawResponse = curl_exec($ch);
+    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    
+    curl_close($ch);
+
+    if ($httpCode === 200 && $rawResponse !== false) {
+        $resData = json_decode($rawResponse, true);
+        $aiResponse = $resData['candidates'][0]['content']['parts'][0]['text'] ?? "";
+        
+        if (!empty($aiResponse)) {
+            $success = true;
+        } else {
+            $retryCount++;
+        }
+    } else {
+        $retryCount++;
+        if ($retryCount < 2) {
+            usleep(500000); // พัก 0.5 วินาทีก่อนลองใหม่
+        }
     }
-    if ($i === 0) sleep(3);
 }
 
 // --- 6. FINAL OUTPUT ---
