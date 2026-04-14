@@ -92,6 +92,84 @@ input, textarea {
         .ai-content strong { font-weight: 600; color: #1e40af; }
         .ai-content table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; font-size: 0.9em; }
         .ai-content th, .ai-content td { border: 1px solid #e2e8f0; padding: 0.4rem 0.6rem; }
+        
+body.dark-mode {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f8fafc;
+}
+
+
+.dark-mode .ai-content strong {
+    color: #93c5fd; 
+}
+
+.dark-mode .ai-content th, 
+.dark-mode .ai-content td {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
+
+.dark-mode input, .dark-mode textarea {
+    background-color: #1e293b;
+    color: #ffffff;
+    border: 1px solid #334155;
+}
+        #dark-mode-toggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+/* ปรับสี Icon ในโหมดปกติ */
+#dark-mode-toggle svg {
+    width: 20px;
+    height: 20px;
+    stroke: #1e293b; /* สีเทาเข้ม */
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* เมื่ออยู่ใน Dark Mode ให้เปลี่ยนสีปุ่มและสี Icon */
+.dark-mode #dark-mode-toggle {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.dark-mode #dark-mode-toggle svg {
+    stroke: #f8fafc; /* สีขาวนวล */
+}
+
+/* ซ่อน Icon ที่ไม่ได้ใช้งาน */
+.sun-icon { display: none; }
+.moon-icon { display: block; }
+
+/* สลับการแสดงผลเมื่อเป็น Dark Mode */
+.dark-mode .sun-icon { display: block; }
+.dark-mode .moon-icon { display: none; }
+
+
     </style>
 </head>
 <body class="h-[100dvh] flex items-center justify-center p-0 sm:p-4 md:p-8 relative">
@@ -131,24 +209,31 @@ input, textarea {
 
 <div class="bg-[#f8fafc] w-full h-full sm:h-[90vh] sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border border-gray-200/50 transition-all duration-300">
     
-    <header class="bg-gradient-to-r from-blue-700 to-blue-500 p-4 text-white flex items-center gap-3 relative z-10 shadow-sm no-select">
-        <div class="relative">
-            <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-blue-700 shadow-inner border-2 border-blue-200 overflow-hidden">
-                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" alt="RW-AI Logo" class="w-full h-full object-cover">
-            </div>
-            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
+    <header class="bg-gradient-to-r from-blue-700 to-blue-500 p-4 text-white flex items-center gap-3 relative z-10 shadow-sm no-select transition-all duration-500 dark:from-slate-900 dark:to-slate-800">
+    <div class="relative">
+        <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-blue-700 shadow-inner border-2 border-blue-200 overflow-hidden">
+            <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" alt="RW-AI Logo" class="w-full h-full object-cover">
         </div>
-        <div class="flex-1">
-            <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">RW-AI Chatbot</h1>
-            <p id="ai-status" class="text-[10px] md:text-xs text-blue-100 font-light flex items-center gap-1">
-                <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
-                กำลังโหลดโมเดล...
-            </p>
-        </div>
-        <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        </button>
-    </header>
+        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
+    </div>
+    <div class="flex-1">
+        <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">RW-AI Chatbot</h1>
+        <p id="ai-status" class="text-[10px] md:text-xs text-blue-100 font-light flex items-center gap-1">
+            <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
+            กำลังโหลดโมเดล...
+        </p>
+    </div>
+
+    <button id="dark-mode-toggle" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors outline-none">
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="sun-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    </button>
+
+    <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    </button>
+</header>
+
 
     <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 scroll-smooth">
         <div class="flex justify-start msg-animate">
@@ -452,6 +537,27 @@ window.addEventListener('offline', () => {
   alert('ขณะนี้คุณขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจไม่สามารถตอบแชทได้นะครับ');
 });
 </script>
+<script>
+const toggleBtn = document.getElementById('dark-mode-toggle');
+const body = document.body;
 
+// ตรวจสอบสถานะเดิม
+if (localStorage.getItem('theme-mode') === 'dark') {
+    body.classList.add('dark-mode');
+}
+
+toggleBtn.addEventListener('click', () => {
+    body.classList.toggle('dark-mode');
+    
+    // บันทึกค่าลงเครื่อง
+    if (body.classList.contains('dark-mode')) {
+        localStorage.setItem('theme-mode', 'dark');
+    } else {
+        localStorage.setItem('theme-mode', 'light');
+    }
+});
+
+    
+</script>
 </body>
 </html>
