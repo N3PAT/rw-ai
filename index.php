@@ -30,6 +30,16 @@
         .msg-animate {
             animation: messagePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
+.ai-content table {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+.ai-content th {
+    background-color: #f1f5f9;
+    font-weight: 600;
+}
 
         .feedback-btn {
             transition: all 0.2s ease;
@@ -322,37 +332,40 @@
     }
 
     function processVisuals(element) {
-    // 1. กวาดล้างเศษโค้ดที่ AI ชอบแถมมา (เช่น ')"> หรือ ">)
+    // 1. กวาดล้างเศษโค้ดที่ AI ชอบแถมมา
     let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
 
-    // 2. จัดการแผนผัง [SHOW_MAP]
+    // 2. จัดการรูปภาพ [SHOW_MAP] และ [SHOW_IMG] ก่อนเป็นอันดับแรก
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     if (text.includes('[SHOW_MAP]')) {
         const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
         text = text.replace('[SHOW_MAP]', imgHtml);
     }
 
-    // 3. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
         const cleanUrl = url.replace(/<[^>]*>?/gm, '').replace(/\s+/g, '').trim();
         return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
     });
 
-    // 4. จัดการลิงก์ (ฉบับสมบูรณ์)
+    // 3. จัดการลิงก์ (เพิ่มตัวดักจับเพื่อไม่ให้ไปยุ่งกับไอคอน SVG)
     const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
     text = text.replace(urlRegex, (url) => {
         const cleanUrl = url.trim();
-        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return cleanUrl; // ปล่อยให้ img tag จัดการ
+
+        // 🚫 ถ้าเป็นลิงก์ของ W3 (พวก SVG) หรือไฟล์รูปภาพ ไม่ต้องทำ Link Card
+        if (cleanUrl.includes('w3.org') || cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i)) {
+            return cleanUrl; 
+        }
         
         return `
         <div class="my-2">
             <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <div class="bg-blue-600 p-2 rounded-lg text-white shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                 </div>
                 <div class="flex flex-col overflow-hidden text-left">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">เปิดลิงก์ภายนอก</span>
                     <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
                 </div>
             </a>
