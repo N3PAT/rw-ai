@@ -338,7 +338,6 @@
     // 2. จัดการรูปภาพ [SHOW_IMG:URL]
     const imgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(imgRegex, (match, url) => {
-        // ล้างอักขระแปลกปลอมที่อาจติดมา เช่น ) หรือ > หรือ '
         const cleanUrl = url.trim().replace(/[\]\)\>\s\'\"]/g, '');
         return `
             <div class="my-4">
@@ -348,10 +347,15 @@
             </div>`;
     });
 
-    // 3. จัดการลิงก์ (เปลี่ยนจาก Emoji เป็น SVG Icon)
-    const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
+    // 3. จัดการลิงก์ภายนอก (ตัวปัญหา) - ใช้ Regex ที่ฉลาดขึ้น
+    // กฎ: ต้องเป็น https และต้องไม่ตามหลังด้วย xmlns หรืออยู่ในเครื่องหมายคำพูดของ tag
+    const urlRegex = /(?<!xmlns=")(?<!src=")(?<!href=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg)))/gi;
+    
     text = text.replace(urlRegex, (url) => {
         const cleanUrl = url.trim().replace(/[\]\)\>\s\'\"]/g, '');
+        // ป้องกันกรณีลิงก์สั้นเกินไปหรือเป็นแค่โดเมนของระบบ
+        if (cleanUrl.length < 15 || cleanUrl.includes('w3.org')) return url;
+
         return `
             <div class="my-2">
                 <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
@@ -363,7 +367,7 @@
                         </svg>
                     </div>
                     <div class="flex flex-col overflow-hidden text-left ml-2">
-                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">External Link</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">เว็บไซต์เพิ่มเติม</span>
                         <span class="text-blue-600 font-medium truncate text-xs w-48">${cleanUrl}</span>
                     </div>
                 </a>
@@ -372,6 +376,7 @@
 
     element.innerHTML = text;
 }
+
 
 
     async function sendFeedback(logId, rating, btn) {
