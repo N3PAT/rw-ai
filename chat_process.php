@@ -296,30 +296,30 @@ for ($i = 0; $i < 2; $i++) {
     if ($i === 0) sleep(2);
 }
 
-// --- 6. OUTPUT & ERROR HANDLING ---
+/// --- 6. OUTPUT & ERROR HANDLING ---
 
 if ($success) {
-    // ... ส่วนบันทึก Log ของนัท (เหมือนเดิม) ...
-    
-    // ส่ง JSON กลับหน้าบ้าน
+    // แนะนำ: สร้าง ID จำลองขึ้นมาหากนัทยังไม่ได้เขียนระบบ Insert ลง DB
+    // เพื่อให้ปุ่ม 👍👎 ใน index.php ไม่ Error
+    $mock_log_id = (string)time(); 
+
     send_json([
         "status" => "success",
-        "response" => trim($aiResponse)
+        "response" => trim($aiResponse),
+        "log_id" => $mock_log_id  // เติมอันนี้เข้าไปด้วยครับ
     ]);
 } else {
-    // วิเคราะห์สาเหตุความล้มเหลวให้ละเอียดขึ้น
     $userFriendlyError = "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้องชั่วคราว (Code: $finalHttpCode)";
     
     if ($finalHttpCode === 503) {
         $userFriendlyError = "ตอนนี้เซิร์ฟเวอร์ Google รับโหลดไม่ไหวครับ น้องลองส่งใหม่อีกครั้งใน 10 วินาทีนะ";
     } elseif ($finalHttpCode === 0) {
         $userFriendlyError = "การเชื่อมต่อระหว่างเซิร์ฟเวอร์ล้มเหลว (Timeout) รบกวนน้องลองถามใหม่อีกครั้งครับ";
-    } elseif ($finalHttpCode === 429) {
-        $userFriendlyError = "น้องถามเร็วไปนิด พี่ตอบไม่ทันแล้ว! รอแป๊บนึงนะคร้าบ";
     }
 
     send_json([
         "status" => "error",
-        "response" => $userFriendlyError
+        "response" => $userFriendlyError,
+        "log_id" => null
     ]);
 }
