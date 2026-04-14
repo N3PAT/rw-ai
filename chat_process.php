@@ -235,7 +235,7 @@ $apiKey = trim((string)$config['gemini']['api_key']);
 // คลีนชื่อโมเดล ป้องกันการสะกดผิดหรือมีช่องว่าง
 $cleanModel = str_replace('models/', '', $modelName);
 // ลองแก้บรรทัดนี้ใน Section 5 เพื่อทดสอบ (Hardcode ชื่อรุ่นลงไปเลย)
-$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . $apiKey;
+$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}";
 
 $payload = [
     "contents" => [["parts" => [["text" => $prompt]]]], 
