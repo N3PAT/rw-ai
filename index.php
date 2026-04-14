@@ -362,14 +362,12 @@ async function sendMessage() {
     }
 }
 
-// --- ปรับปรุงการจัดการรูปภาพและลิงก์ให้ "ฉลาด" ขึ้น ---
+/
+
 function processVisuals(element) {
     let text = element.innerHTML;
 
-    // 1. ล้างเศษอักขระที่ AI ชอบใส่เกินมาใน URL (เช่น ') หรือ ") หรือ >)
-    text = text.replace(/('|")?\)?(\]?\s?(&gt;|>))/g, ' ');
-
-    // 2. จัดการแผนผัง [SHOW_MAP]
+    // 1. จัดการแผนผัง [SHOW_MAP]
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     if (text.includes('[SHOW_MAP]')) {
         const imgHtml = `
@@ -380,11 +378,11 @@ function processVisuals(element) {
         text = text.replace('[SHOW_MAP]', imgHtml);
     }
 
-    // 3. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
+    // 2. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
-        // ล้าง URL ให้สะอาดที่สุด
-        const cleanUrl = url.trim().split(' ')[0].replace(/[\]\)\>]/g, ''); 
+        // ล้าง URL ให้สะอาด (ลบช่องว่างและวงเล็บปิดที่อาจติดมา)
+        const cleanUrl = url.trim().replace(/[\]\)\>\s]/g, ''); 
         return `
             <div class="my-4 animate-fade-in">
                 <img src="${cleanUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" 
@@ -393,7 +391,7 @@ function processVisuals(element) {
             </div>`;
     });
 
-    // 4. จัดการลิงก์ (ฉบับไม่ซ้อนทับกับรูปภาพ)
+    // 3. จัดการลิงก์ (แก้ไข Regex ไม่ให้กินข้อความปกติ)
     const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
     text = text.replace(urlRegex, (url) => {
         const cleanUrl = url.trim().replace(/[\]\)\>]/g, '');
@@ -413,9 +411,6 @@ function processVisuals(element) {
 
     element.innerHTML = text;
 }
-
-
-
 
 
     async function sendFeedback(logId, rating, btn) {
