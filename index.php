@@ -342,6 +342,7 @@
     // 1. กวาดล้างเศษโค้ดที่ AI อาจจะแถมมาเกิน
     let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
 
+
     // 2. จัดการ [SHOW_MAP]
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     const mapRegex = /\[\s?SHOW_MAP\s?\]/gi;
