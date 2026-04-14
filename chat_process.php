@@ -32,8 +32,7 @@ $config = [
 "gemini" => [
         "api_key" => getenv('GEMINI_API_KEY'),
         "models" => [
-    'gemini-1.5-flash', // รุ่นนี้เสถียรที่สุดและรองรับวงกว้างในปัจจุบัน
-    'gemini-1.5-flash-8b'
+    'gemini-1.5-flash' 
 ]
 
     ]
