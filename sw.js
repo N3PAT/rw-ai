@@ -4,8 +4,6 @@ const assets = [
   'index.php',
   'manifest.json',
   // ใส่ชื่อไฟล์ CSS/JS ของน้องตรงนี้ เช่น:
-  'style.css',
-  'script.js'
 ];
 
 // ติดตั้ง Service Worker และเก็บไฟล์ลง Cache
