@@ -59,7 +59,7 @@ function getUserIP() {
 
 // 🛡️ [UPDATE] ระบบจัดการคิว (Request Throttling)
 function checkRateLimit() {
-    $limit = 3; // ถามได้ 3 ครั้ง
+    $limit = 15; // ถามได้ 3 ครั้ง
     $window = 60; // ใน 60 วินาที
     $now = time();
 
@@ -262,7 +262,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 30); // เพิ่มเวลาเป็น 30 วินาที เผื่อโมเดลตัวใหญ่ประมวลผล
+curl_setopt($ch, CURLOPT_TIMEOUT, 60); // เพิ่มเวลาเป็น 30 วินาที เผื่อโมเดลตัวใหญ่ประมวลผล
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
 
 $rawResponse = curl_exec($ch);
