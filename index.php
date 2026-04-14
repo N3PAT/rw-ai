@@ -103,6 +103,72 @@
 
         /* Toast styles for dark mode */
         body.dark-mode .toast { background-color: #1e293b; border: 1px solid #334155; color: #fff; }
+
+        /* === [ TOAST UI DESIGN ] === */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 90%;
+    max-width: 400px;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    display: flex;
+    items-center: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* Toast Types */
+.toast-offline { border-left: 4px solid #ef4444; }
+.toast-online { border-left: 4px solid #10b981; }
+.toast-info { border-left: 4px solid #3b82f6; }
+
+.toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+}
+
+/* Dark Mode Support for Toast */
+body.dark-mode .toast {
+    background: rgba(30, 41, 59, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+}
+
+.toast-offline svg { color: #ef4444; }
+.toast-online svg { color: #10b981; }
+.toast-info svg { color: #3b82f6; }
+
     </style>
 </head>
 <body class="h-[100dvh] flex items-center justify-center p-0 sm:p-4 md:p-8 relative">
@@ -490,18 +556,24 @@ function useSuggestion(text) {
         });
     }
 
-    // === [ B: TOAST NOTIFICATION LOGIC ] ===
+        // === [ B: TOAST NOTIFICATION LOGIC ] ===
     function showToast(message, type = 'info', duration = 4000) {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
+        let container = document.getElementById('toast-container');
+        
+        // ถ้ายังไม่มี container ให้สร้างใหม่
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type} no-select`;
 
         const icons = {
-            offline: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`,
-            online: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
-            info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
+            offline: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`,
+            online: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+            info: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
         };
 
         const selectedIcon = icons[type] || icons.info;
@@ -511,14 +583,18 @@ function useSuggestion(text) {
         `;
         
         container.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 100);
+
+        // Animation ขาเข้า
+        setTimeout(() => toast.classList.add('show'), 50);
+
+        // Animation ขาออกและลบ Element
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 400);
         }, duration);
     }
 
-    // ตรวจจับสถานะเน็ต
+    // ตรวจจับสถานะเน็ต (ตัวอย่างการใช้งาน)
     window.addEventListener('offline', () => {
         showToast('ขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจตอบช้าลงนะครับ', 'offline', 5000);
     });
@@ -527,13 +603,6 @@ function useSuggestion(text) {
         showToast('กลับมาเชื่อมต่อแล้ว! ถามพี่ RW-AI ต่อได้เลยครับ', 'online', 3000);
     });
 
-    // === [ C: SERVICE WORKER ] ===
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('RW-AI PWA Ready!'))
-                .catch(err => console.log('PWA Error:', err));
-        });
     }
 </script>
 
