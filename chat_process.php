@@ -221,7 +221,13 @@ $systemInstruction = "คุณคือ 'พี่ RW-AI' รุ่นพี่
 4. สไตล์การตอบ: สุภาพ ใจดี เป็นกันเอง และต้องลงท้ายด้วย 'ครับ' ทุกประโยคเสมอ
 5. ห้ามแสดงความคิดภายใน: ห้ามแสดง Task Analysis, User asks, Role, หรือขั้นตอนการวิเคราะห์กฎ ให้แสดงเฉพาะคำตอบสุดท้ายที่สรุปเสร็จสิ้นแล้วเท่านั้น";
 // --- 5. AI API CALL ---
-// (ส่วนนี้ใช้โครงสร้างเดิมที่แยก system_instruction และ contents ออกจากกันตามที่พี่แก้ให้ครั้งก่อนนะครับ)
+$modelName = $config['gemini']['model'];
+$apiKey = $config['gemini']['api_key']; // trim มาจากข้างบนแล้ว
+$cleanModel = str_replace('models/', '', $modelName);
+
+// 🚩 จุดสำคัญ: ต้องสร้าง URL ให้ถูกต้อง
+$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$cleanModel}:generateContent?key=" . $apiKey;
+
 $payload = [
     "system_instruction" => [
         "parts" => [["text" => $systemInstruction]]
@@ -249,7 +255,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30); // ลดเวลาลงหน่อยเพื่อให้ระบบตอบสนองเร็วขึ้น
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
 
 $rawResponse = curl_exec($ch);
@@ -257,18 +263,21 @@ $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 curl_close($ch);
 
+// ตรวจสอบผลลัพธ์
 if ($httpCode === 200 && $rawResponse) {
     $resData = json_decode($rawResponse, true);
+    // เช็คโครงสร้าง JSON ของ Gemini ให้ละเอียดขึ้น
     if (isset($resData['candidates'][0]['content']['parts'][0]['text'])) {
         $aiResponse = $resData['candidates'][0]['content']['parts'][0]['text'];
         $success = true;
     } else {
-        $aiResponse = "ขออภัยครับ พี่ประมวลผลคำตอบไม่ได้ (Empty Result)";
+        $aiResponse = "พี่ขออภัยครับ ระบบประมวลผลคำตอบไม่ได้ (Code: Empty Parts)";
     }
 } else {
-    // Error Handling ตามเดิมที่น้องทำไว้
-    if ($httpCode === 429) $aiResponse = "ขออภัยครับ โควตาเต็ม (429) ลองใหม่ใน 1 นาทีครับ";
-    else $aiResponse = "ขออภัยครับ ระบบประมวลผลขัดข้อง (Error: " . $httpCode . ")";
+    // แจ้ง Error ให้ละเอียดตามที่พี่เคยแนะนำ
+    if ($httpCode === 429) $aiResponse = "โควตาคำถามเต็มชั่วคราว ลองใหม่อีกครั้งใน 1 นาทีนะครับ";
+    elseif ($httpCode === 400) $aiResponse = "คำสั่งผิดพลาด (Code: 400) รบกวนแจ้งพี่รุ่น 78 ให้เช็ค API หน่อยครับ";
+    else $aiResponse = "ระบบขัดข้อง (Code: $httpCode) " . ($curlError ?: "");
 }
 
 
