@@ -1,13 +1,19 @@
 <?php
 // --- 1. SETTINGS & ENV ---
-if (file_exists(__DIR__ . '/.env')) {
-    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0 || strpos($line, '=') === false) continue;
-        list($name, $value) = explode('=', $line, 2);
-        putenv(trim($name) . "=" . trim($value));
+$envPath = __DIR__ . '/.env';
+if (file_exists($envPath) && is_readable($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines !== false) {
+        foreach ($lines as $line) {
+            if (strpos(trim($line), '#') === 0 || strpos($line, '=') === false) continue;
+            list($name, $value) = explode('=', $line, 2);
+            putenv(trim($name) . "=" . trim($value));
+        }
     }
+} else {
+    // ถ้าอ่าน .env ไม่ได้ ให้แจ้งเตือนเบาๆ ใน Log หรือข้ามไป (ระบบอาจจะใช้ Environment Variables ของระบบแทน)
 }
+
 
 // ฟังก์ชันสร้างแท่งสัญญาณ
 function getStatusBars($status) {
