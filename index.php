@@ -18,6 +18,16 @@
         body {
             font-family: 'Sarabun', sans-serif;
             background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+             -webkit-user-select: none; /* Safari */
+    -ms-user-select: none;     /* IE 10 and 11 */
+    user-select: none;         /* Standard syntax */
+}
+
+/* ยกเว้น: ช่องกรอกข้อความ (Input) ยังต้องให้พิมพ์และลากคลุมได้ปกติ */
+input, textarea {
+    -webkit-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
