@@ -177,19 +177,23 @@ foreach ($config['gemini']['models'] as $index => $currentModel) {
 
 
 // --- 6. FINAL OUTPUT ---
+// --- 6. FINAL OUTPUT (ฉบับแก้เพื่อตรวจสอบ) ---
 if ($success) {
-    // บันทึกลง Chat Log (ตัวอย่างการสร้าง log_id)
-    $logId = (string)time(); 
     send_json([
         "status" => "success", 
         "response" => trim($aiResponse), 
-        "log_id" => $logId
+        "log_id" => (string)time()
     ]);
 } else {
-    $errorMsg = ($httpCode === 503) ? "ตอนนี้คนใช้บริการเยอะมากครับ พี่ประมวลผลไม่ทัน ลองอีก 10 วิ นะครับ" : "พี่ขอโทษครับ ระบบขัดข้องชั่วคราว (Error: $httpCode)";
+    // แก้ให้พี่ AI บอกเลยว่าพังเพราะอะไร
+    $debug_info = "Code: $httpCode | Model: $currentModel";
+    if (empty($config['gemini']['api_key'])) {
+        $debug_info .= " | API Key is Missing!";
+    }
+    
     send_json([
         "status" => "error", 
-        "response" => $errorMsg, 
+        "response" => "ระบบขัดข้องครับ ($debug_info)", 
         "log_id" => null
     ]);
 }
