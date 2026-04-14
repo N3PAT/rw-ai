@@ -322,49 +322,46 @@
     }
 
     function processVisuals(element) {
-    let text = element.innerHTML;
+    // 1. กวาดล้างเศษโค้ดที่ AI ชอบแถมมา (เช่น ')"> หรือ ">)
+    let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
 
-    // 1. จัดการแผนผัง [SHOW_MAP]
+    // 2. จัดการแผนผัง [SHOW_MAP]
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     if (text.includes('[SHOW_MAP]')) {
-        const imgHtml = `
-            <div class="my-4">
-                <p class="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-wider">แผนผังบริเวณโรงเรียน</p>
-                <img src="${mapUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${mapUrl}')">
-            </div>`;
+        const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
         text = text.replace('[SHOW_MAP]', imgHtml);
     }
 
-    // 2. จัดการรูปภาพ [SHOW_IMG:URL]
-    const imgRegex = /\[SHOW_IMG:(https?:\/\/[^\]\s]+)\]/gi;
-    text = text.replace(imgRegex, (match, url) => {
-        return `<div class="my-4"><img src="${url}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${url}')" onerror="this.parentElement.style.display='none'"></div>`;
+    // 3. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
+    const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
+    text = text.replace(customImgRegex, (match, url) => {
+        const cleanUrl = url.replace(/<[^>]*>?/gm, '').replace(/\s+/g, '').trim();
+        return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
     });
 
-    // 3. จัดการลิงก์ (เพิ่มเงื่อนไข: ต้องเป็นพื้นที่ว่างรอบข้างเท่านั้น ถึงจะกลายเป็นกล่องลิงก์)
-    // วิธีนี้จะป้องกันไม่ให้มันไปยุ่งกับ URL ที่อยู่ใน <img src="..."> หรือ <svg xmlns="...">
-    const urlRegex = /(?<!src=")(?<!href=")(?<!") (https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg|pn)))/gi;
-    
+    // 4. จัดการลิงก์ (ฉบับสมบูรณ์)
+    const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
     text = text.replace(urlRegex, (url) => {
-        const cleanUrl = url.trim().replace(/[\]\)\>\'\"]/g, '');
-        if (cleanUrl.includes('w3.org')) return url; // ข้าม SVG namespace
-
+        const cleanUrl = url.trim();
+        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return cleanUrl; // ปล่อยให้ img tag จัดการ
+        
         return `
-            <div class="my-2">
-                <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
-                    <div class="bg-blue-600 p-2 rounded-lg text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                    </div>
-                    <div class="flex flex-col overflow-hidden text-left ml-2">
-                        <span class="text-[10px] text-gray-400 uppercase font-bold">เว็บไซต์เพิ่มเติม</span>
-                        <span class="text-blue-600 font-medium truncate text-xs w-48">${cleanUrl}</span>
-                    </div>
-                </a>
-            </div>`;
+        <div class="my-2">
+            <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </div>
+                <div class="flex flex-col overflow-hidden text-left">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
+                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
+                </div>
+            </a>
+        </div>`;
     });
 
     element.innerHTML = text;
 }
+
 
 
 
