@@ -277,12 +277,16 @@ foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
     }
 
             // ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไปใช้ Key ถัดไป
+        // ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไปใช้ Key ถัดไป
     if ($httpCode === 429 || ($httpCode >= 500 && $httpCode <= 599)) {
         continue; 
     } 
     
     // ถ้าสำเร็จ หรือเจอ Error อื่นๆ (400, 403) ให้หยุดการวนลูป
     break; 
+} // <--- ต้องมีปีกกาปิดตัวนี้เพื่อจบการวนลูปสลับ Key
+
+// --- 6. LOGGING & CLEANUP ---
 
 
 
