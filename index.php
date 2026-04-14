@@ -40,6 +40,13 @@
     background-color: #f1f5f9;
     font-weight: 600;
 }
+        .msg-text {
+    white-space: pre-wrap;
+    word-break: break-word; /* เปลี่ยนจาก normal เป็น break-word */
+    overflow-wrap: break-word;
+    display: block; /* เปลี่ยนจาก inline-block เป็น block */
+}
+
 
         .feedback-btn {
             transition: all 0.2s ease;
@@ -361,17 +368,18 @@ if (mapRegex.test(text)) {
         }
         
         return `
-        <div class="my-2">
-            <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
-                <div class="bg-blue-600 p-2 rounded-lg text-white shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                </div>
-                <div class="flex flex-col overflow-hidden text-left">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">เปิดลิงก์ภายนอก</span>
-                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
-                </div>
-            </a>
-        </div>`;
+<div class="my-2">
+    <div onclick="showLinkConfirm('${cleanUrl}')" class="link-card cursor-pointer hover:bg-blue-50 transition-all group">
+        <div class="bg-blue-600 p-2 rounded-lg text-white shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        </div>
+        <div class="flex flex-col overflow-hidden text-left">
+            <span class="text-[10px] text-gray-400 uppercase font-bold">เปิดลิงก์ภายนอก</span>
+            <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
+        </div>
+    </div>
+</div>`;
+
     });
 
     element.innerHTML = text;
@@ -426,7 +434,23 @@ if (mapRegex.test(text)) {
         setTimeout(openPopup, 500);
     });
 </script>
+<script>
+function showLinkConfirm(url) {
+    const modal = document.getElementById('link-modal');
+    document.getElementById('target-link-display').innerText = url;
+    document.getElementById('confirm-link-btn').href = url;
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('link-modal-content').classList.replace('scale-95', 'scale-100');
+}
 
+function closeLinkModal() {
+    const modal = document.getElementById('link-modal');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('link-modal-content').classList.replace('scale-100', 'scale-95');
+}
+
+    
+</script>
 
 </body>
 </html>
