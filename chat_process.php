@@ -278,11 +278,11 @@ foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
         }
     }
 
-            // ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไปใช้ Key ถัดไป
-        // ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไปใช้ Key ถัดไป
-    if ($httpCode === 429 || ($httpCode >= 500 && $httpCode <= 599)) {
+                // ถ้าติด Quota (429), Server เอ๋อ (5xx) หรือเชื่อมต่อไม่ได้ (Code 0) ให้ลอง Key ถัดไป
+    if ($httpCode === 429 || ($httpCode >= 500 && $httpCode <= 599) || $httpCode === 0) {
         continue; 
     } 
+
     
     // ถ้าสำเร็จ หรือเจอ Error อื่นๆ (400, 403) ให้หยุดการวนลูป
     break; 
@@ -315,6 +315,7 @@ if ($success && !empty($aiResponse)) {
         "log_id" => $lastId
     ]);
 } else {
-    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบขัดข้อง (Code: $httpCode) ลองถามใหม่อีกครั้งนะครับ"]);
-
+    // ดึงข้อความ Error จาก cURL ออกมาดู (เฉพาะช่วงทดสอบ)
+    send_json(["response" => "ระบบขัดข้อง (Code: $httpCode) สาเหตุ: $curlError"]);
 }
+
