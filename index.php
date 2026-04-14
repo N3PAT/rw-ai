@@ -362,7 +362,7 @@ async function sendMessage() {
     }
 }
 
-/
+
 
 function processVisuals(element) {
     let text = element.innerHTML;
