@@ -74,74 +74,7 @@ input, textarea {
         .ai-content img { cursor: zoom-in; transition: opacity 0.2s; }
         .ai-content img:hover { opacity: 0.9; }
 
-        .loader {
-            width: 16px; height: 16px;
-            border: 2px solid #3b82f6;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
 
-        .ai-content { word-break: break-word; }
-        .ai-content p { margin-bottom: 0.5rem; }
-        .ai-content strong { font-weight: 600; color: #1e40af; }
-        .ai-content table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; font-size: 0.9em; }
-        .ai-content th, .ai-content td { border: 1px solid #e2e8f0; padding: 0.4rem 0.6rem; }
-        
-
-
-/* จัดการการแสดงผลไอคอนสลับโหมด */
-.sun-icon { display: none; }
-.moon-icon { display: block; }
-
-body.dark-mode .sun-icon { display: block; }
-body.dark-mode .moon-icon { display: none; }
-
-/* ปรับ Header เมื่อเป็น Dark Mode */
-body.dark-mode header {
-    background: linear-gradient(to right, #0f172a, #1e293b) !important;
-}
-
-/* ปรับสีพื้นหลัง Main Chat เมื่อเป็น Dark Mode */
-body.dark-mode main, body.dark-mode footer {
-    background-color: #1e293b;
-    border-color: #334155;
-}
-
-/* ปรับสีกล่องข้อความ AI เมื่อเป็น Dark Mode */
-body.dark-mode .ai-content {
-    background-color: #334155;
-    color: #f8fafc;
-    border-color: #475569;
-}
-
-.toast-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.toast-icon svg {
-    width: 20px;
-    height: 20px;
-}
-
-/* สีของ Icon ตามสถานะ */
-.toast-offline .toast-icon { color: #ef4444; }
-.toast-online .toast-icon { color: #10b981; }
-
-/* Dark Mode: ทำให้ Icon เด่นขึ้น */
-body.dark-mode .toast-offline .toast-icon { color: #f87171; }
-body.dark-mode .toast-online .toast-icon { color: #34d399; }
-
-
-    </style>
 </head>
 <body class="h-[100dvh] flex items-center justify-center p-0 sm:p-4 md:p-8 relative">
 
@@ -234,12 +167,26 @@ body.dark-mode .toast-online .toast-icon { color: #34d399; }
             <button onclick="useSuggestion('สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียนคืออะไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียน</button>
         </div>
 
-        <div class="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-blue-400 focus-within:bg-white transition-all">
-            <textarea id="user-input" placeholder="พิมพ์คำถามที่นี่..." rows="1" class="flex-1 resize-none bg-transparent px-3 py-2 focus:outline-none text-sm md:text-base text-gray-700 max-h-32"></textarea>
-            <button type="button" onclick="sendMessage()" id="send-btn" class="bg-blue-600 text-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center hover:bg-blue-700 hover:rotate-12 active:scale-90 transition-all shadow-md shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </div>
+        <div id="input-container" class="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
+    <textarea 
+        id="user-input" 
+        placeholder="พิมพ์คำถามที่นี่..." 
+        rows="1" 
+        class="flex-1 resize-none bg-transparent px-3 py-2 focus:outline-none text-sm md:text-base text-gray-700 max-h-32">
+    </textarea>
+    
+    <button 
+        type="button" 
+        onclick="sendMessage()" 
+        id="send-btn" 
+        class="bg-blue-600 text-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center hover:bg-blue-700 hover:rotate-12 active:scale-90 transition-all shadow-md shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+    </button>
+</div>
+
     </footer>
 </div>
 
