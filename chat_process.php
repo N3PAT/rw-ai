@@ -31,11 +31,11 @@ $config = [
     ],
 "gemini" => [
         "api_key" => getenv('GEMINI_API_KEY'),
-        "models"  => [
-            getenv('GEMINI_MODEL_PRIMARY') ?: 'gemini-3.1-flash-lite-preview', // ตัวหลัก
-            getenv('GEMINI_MODEL_SECONDARY') ?: 'gemini-2.5-flash',           // ตัวสำรอง 1
-            'gemini-1.5-flash'                                               // ตัวสำรองสุดท้าย (กันตาย)
-        ]
+        "models" => [
+    'gemini-1.5-flash', // รุ่นนี้เสถียรที่สุดและรองรับวงกว้างในปัจจุบัน
+    'gemini-1.5-flash-8b'
+]
+
     ]
 ];
 function send_json(array $data): void {
