@@ -45,31 +45,6 @@ function send_json(array $data): void {
 }
 
 // 🛡️ ระบบจัดการคิว (Request Throttling) - ปรับเป็น 20 เพื่อให้นัททดสอบได้ลื่นขึ้น
-function checkRateLimit() {
-    $limit = 20; 
-    $window = 60; 
-    $now = time();
-    if (!isset($_SESSION['request_ts'])) $_SESSION['request_ts'] = [];
-    $_SESSION['request_ts'] = array_filter($_SESSION['request_ts'], fn($ts) => $ts > ($now - $window));
-    if (count($_SESSION['request_ts']) >= $limit) {
-        send_json(["status" => "error", "response" => "น้องใจเย็นๆ นะครับ พี่ขอเวลาพักจิบน้ำแป๊บนึง อีกสัก 30 วินาทีค่อยถามใหม่นะ", "log_id" => null]);
-    }
-    $_SESSION['request_ts'][] = $now;
-}
-
-if (!$config['db']['host'] || !$config['gemini']['api_key']) {
-     send_json(["status" => "error", "response" => "ระบบขัดข้อง: ตั้งค่า Environment ไม่สมบูรณ์ครับ", "log_id" => null]);
-}
-
-$input = json_decode(file_get_contents('php://input'), true);
-$userMessageRaw = trim((string)($input['message'] ?? ''));
-$userMessageSafe = htmlspecialchars(mb_substr($userMessageRaw, 0, 500, 'UTF-8'), ENT_QUOTES, 'UTF-8');
-
-if ($userMessageSafe === '') {
-    send_json(["status" => "success", "response" => "พิมพ์คำถามมาได้เลยครับ พี่ RW-AI รออยู่!", "log_id" => (string)time()]);
-}
-
-checkRateLimit();
 
 // --- 2. DATABASE CONNECTION ---
 $conn = mysqli_init();
