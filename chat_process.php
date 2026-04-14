@@ -124,9 +124,11 @@ $httpCode = 0;
 foreach ($config['gemini']['models'] as $index => $currentModel) {
     if (!$currentModel) continue;
 
-    // สร้าง URL ตาม Model ที่กำลังเรียกในรอบนั้น
-    $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$currentModel}:generateContent?key=" . urlencode((string)$config['gemini']['api_key']);
-
+    // ตรวจสอบว่ามีคำว่า models/ นำหน้าหรือยัง ถ้าไม่มีให้เติมเข้าไป
+    $modelPath = (strpos($currentModel, 'models/') === 0) ? $currentModel : "models/" . $currentModel;
+    
+    $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$modelPath}:generateContent?key=" . urlencode((string)$config['gemini']['api_key']);
+    
     $ch = curl_init($apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
