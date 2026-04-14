@@ -18,16 +18,43 @@
         body {
             font-family: 'Sarabun', sans-serif;
             background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
-             -webkit-user-select: none; /* Safari */
-    -ms-user-select: none;     /* IE 10 and 11 */
-    user-select: none;         /* Standard syntax */
-}
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none;     /* IE 10 and 11 */
+            user-select: none;         /* Standard syntax */
+            transition: background 0.5s ease;
+        }
 
-/* ยกเว้น: ช่องกรอกข้อความ (Input) ยังต้องให้พิมพ์และลากคลุมได้ปกติ */
-input, textarea {
-    -webkit-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
+        /* 🌙 Dark Mode Styles */
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+        }
+
+        body.dark-mode .bg-\[\#f8fafc\] { background-color: #0f172a !important; border-color: #1e293b !important; }
+        body.dark-mode .bg-white { background-color: #1e293b !important; color: #f1f5f9 !important; }
+        body.dark-mode .text-gray-800 { color: #f1f5f9 !important; }
+        body.dark-mode .text-gray-600 { color: #cbd5e1 !important; }
+        body.dark-mode .text-gray-700 { color: #e2e8f0 !important; }
+        body.dark-mode .bg-gray-50 { background-color: #334155 !important; border-color: #475569 !important; }
+        body.dark-mode .bg-gray-200 { background-color: #334155 !important; }
+        body.dark-mode .border-gray-100, 
+        body.dark-mode .border-gray-200 { border-color: #334155 !important; }
+        
+        /* Message Bubbles in Dark Mode */
+        body.dark-mode .ai-content { background-color: #334155 !important; border-color: #475569 !important; color: #f1f5f9 !important; }
+        body.dark-mode .bg-blue-50 { background-color: #1e293b !important; color: #60a5fa !important; border-color: #2563eb !important; }
+        
+        /* Dark Mode Icons */
+        .sun-icon { display: none; }
+        .moon-icon { display: block; }
+        body.dark-mode .sun-icon { display: block; }
+        body.dark-mode .moon-icon { display: none; }
+
+        /* ยกเว้น: ช่องกรอกข้อความ (Input) ยังต้องให้พิมพ์และลากคลุมได้ปกติ */
+        input, textarea {
+            -webkit-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
         }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -73,8 +100,10 @@ input, textarea {
         #modal-img { transition: transform 0.3s ease; }
         .ai-content img { cursor: zoom-in; transition: opacity 0.2s; }
         .ai-content img:hover { opacity: 0.9; }
-</style>
 
+        /* Toast styles for dark mode */
+        body.dark-mode .toast { background-color: #1e293b; border: 1px solid #334155; color: #fff; }
+    </style>
 </head>
 <body class="h-[100dvh] flex items-center justify-center p-0 sm:p-4 md:p-8 relative">
 
@@ -128,10 +157,10 @@ input, textarea {
         </p>
     </div>
 
-    <button id="dark-mode-toggle" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors outline-none">
-    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-</button>
+    <button id="dark-mode-toggle" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors outline-none">
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    </button>
 
 
     <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
@@ -448,6 +477,7 @@ function useSuggestion(text) {
     const toggleBtn = document.getElementById('dark-mode-toggle');
     const body = document.body;
 
+    // เช็คค่าเริ่มต้น
     if (localStorage.getItem('theme-mode') === 'dark') {
         body.classList.add('dark-mode');
     }
