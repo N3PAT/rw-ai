@@ -247,8 +247,17 @@
                     <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
                         <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
                         <div class="flex gap-2">
-                            <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1 hover:bg-blue-50 rounded text-blue-400">👍</button>
-                            <button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1 hover:bg-red-50 rounded text-red-400">👎</button>
+                            <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-colors" title="มีประโยชน์">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+    </svg>
+</button>
+<button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="ไม่มีประโยชน์">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
+    </svg>
+</button>
+
                         </div>
                     </div>` : ''}
             </div>
@@ -313,39 +322,63 @@
     }
 
     function processVisuals(element) {
-        let text = element.innerHTML;
+    let text = element.innerHTML;
 
-        // 1. แผนผัง [SHOW_MAP]
-        const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
-        if (text.includes('[SHOW_MAP]')) {
-            const imgHtml = `<div class="my-4"><img src="${mapUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${mapUrl}')"></div>`;
-            text = text.replace('[SHOW_MAP]', imgHtml);
-        }
-
-        // 2. รูปภาพอื่นๆ [SHOW_IMG:URL] (แก้ Regex ให้ไม่กินข้อความไทย)
-        const imgRegex = /\[SHOW_IMG:(https?:\/\/[^\]\s]+)\]/gi;
-        text = text.replace(imgRegex, (match, url) => {
-            return `<div class="my-4"><img src="${url}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${url}')" onerror="this.parentElement.style.display='none'"></div>`;
-        });
-
-        // 3. ลิงก์ (เน้นความแม่นยำ)
-        const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
-        text = text.replace(urlRegex, (url) => {
-            return `<div class="my-2"><a href="${url}" class="link-card hover:bg-blue-50" target="_blank">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">🔗</div>
-                <div class="flex flex-col overflow-hidden text-left ml-2">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">เข้าสู่เว็บไซต์</span>
-                    <span class="text-blue-600 font-medium truncate text-xs w-48">${url}</span>
-                </div></a></div>`;
-        });
-
-        element.innerHTML = text;
+    // 1. จัดการแผนผัง [SHOW_MAP]
+    const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
+    if (text.includes('[SHOW_MAP]')) {
+        const imgHtml = `
+            <div class="my-4">
+                <p class="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-wider">แผนผังบริเวณโรงเรียน</p>
+                <img src="${mapUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${mapUrl}')">
+            </div>`;
+        text = text.replace('[SHOW_MAP]', imgHtml);
     }
+
+    // 2. จัดการรูปภาพ [SHOW_IMG:URL]
+    const imgRegex = /\[SHOW_IMG:(.*?)\]/gi;
+    text = text.replace(imgRegex, (match, url) => {
+        // ล้างอักขระแปลกปลอมที่อาจติดมา เช่น ) หรือ > หรือ '
+        const cleanUrl = url.trim().replace(/[\]\)\>\s\'\"]/g, '');
+        return `
+            <div class="my-4">
+                <img src="${cleanUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" 
+                     onclick="openImageModal('${cleanUrl}')" 
+                     onerror="this.parentElement.style.display='none'">
+            </div>`;
+    });
+
+    // 3. จัดการลิงก์ (เปลี่ยนจาก Emoji เป็น SVG Icon)
+    const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
+    text = text.replace(urlRegex, (url) => {
+        const cleanUrl = url.trim().replace(/[\]\)\>\s\'\"]/g, '');
+        return `
+            <div class="my-2">
+                <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
+                    <div class="bg-blue-600 p-2 rounded-lg text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col overflow-hidden text-left ml-2">
+                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">External Link</span>
+                        <span class="text-blue-600 font-medium truncate text-xs w-48">${cleanUrl}</span>
+                    </div>
+                </a>
+            </div>`;
+    });
+
+    element.innerHTML = text;
+}
+
 
     async function sendFeedback(logId, rating, btn) {
-        btn.parentElement.innerHTML = '<span class="text-[10px] text-blue-500">ขอบคุณครับ!</span>';
-        await fetch('update_feedback.php', { method: 'POST', body: JSON.stringify({ log_id: logId, rating }) });
-    }
+    // เปลี่ยนจากคำว่า "ขอบคุณครับ! 🤖" เป็นข้อความเรียบๆ
+    btn.parentElement.innerHTML = '<span class="text-[10px] text-blue-500 font-medium">บันทึกคำติชมแล้ว ขอบคุณครับ</span>';
+    await fetch('update_feedback.php', { method: 'POST', body: JSON.stringify({ log_id: logId, rating }) });
+}
 
     function openImageModal(src) {
         document.getElementById('modal-img').src = src;
