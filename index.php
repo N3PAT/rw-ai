@@ -600,6 +600,27 @@ function useSuggestion(text) {
             setTimeout(() => toast.remove(), 500);
         }, duration);
     }
+    // === [ C: DETECT NETWORK STATUS ] ===
+    window.addEventListener('offline', () => {
+        showToast('ขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจตอบช้าลงนะครับ', 'offline', 5000);
+    });
+
+    window.addEventListener('online', () => {
+        showToast('กลับมาเชื่อมต่อแล้ว! ถามพี่ RW-AI ต่อได้เลยครับ', 'online', 3000);
+    });
+
+    // ตรวจสอบสถานะตอนโหลดหน้าเว็บครั้งแรกด้วย (เผื่อเข้าเว็บมาตอนไม่มีเน็ตพอดี)
+    if (!navigator.onLine) {
+        showToast('ขณะนี้คุณกำลังใช้งานแบบออฟไลน์', 'offline', 5000);
+    }
+    // === [ D: SERVICE WORKER REGISTRATION ] ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('RW-AI PWA Ready!'))
+                .catch(err => console.log('PWA Error:', err));
+        });
+    }
 
 </script>
 
