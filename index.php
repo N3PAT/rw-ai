@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0056b3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192x192.png">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RW-AI Chatbot</title>
@@ -421,5 +427,21 @@ function useSuggestion(text) {
 }
 
 </script>
+    <script>
+// ลงทะเบียน Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('RW-AI PWA พร้อมใช้งาน!'))
+      .catch(err => console.log('PWA ติดปัญหา:', err));
+  });
+}
+
+// โค้ดเสริม: เตือนผู้ใช้ถ้าเน็ตหลุด
+window.addEventListener('offline', () => {
+  alert('ขณะนี้คุณขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจไม่สามารถตอบแชทได้นะครับ');
+});
+</script>
+
 </body>
 </html>
