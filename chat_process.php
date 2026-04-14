@@ -81,9 +81,6 @@ function checkRateLimit() {
     $_SESSION['request_ts'][] = $now;
 }
 
-if (!$config['db']['host'] || !$config['gemini']['api_key']) {
-     send_json(["response" => "ระบบขัดข้อง: ตั้งค่า Environment Variables (.env) ไม่สมบูรณ์ครับ"]);
-}
 
 // 🔥 OPTIMIZE 1: รับและเช็คข้อความ
 $input = json_decode(file_get_contents('php://input'), true);
@@ -279,12 +276,12 @@ foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
         }
     }
 
-        // ⚠️ ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไป Key ถัดไป
+            // ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไปใช้ Key ถัดไป
     if ($httpCode === 429 || ($httpCode >= 500 && $httpCode <= 599)) {
         continue; 
     } 
     
-    // ถ้า Error อื่นๆ เช่น 400 (ส่งข้อมูลผิด) ไม่ต้องลอง Key อื่น ให้หยุดเลย
+    // ถ้าสำเร็จ หรือเจอ Error อื่นๆ (400, 403) ให้หยุดการวนลูป
     break; 
 
 
@@ -312,5 +309,6 @@ if ($success && !empty($aiResponse)) {
         "log_id" => $lastId
     ]);
 } else {
-    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้อง (HTTP: $httpCode) ลองใหม่อีกครั้งนะครับ"]);
+    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบขัดข้อง (Code: $httpCode) ลองถามใหม่อีกครั้งนะครับ"]);
+
 }
