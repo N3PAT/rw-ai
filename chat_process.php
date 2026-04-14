@@ -296,17 +296,17 @@ for ($i = 0; $i < 2; $i++) {
     if ($i === 0) sleep(2);
 }
 
-/// --- 6. OUTPUT & ERROR HANDLING ---
+// --- 6. OUTPUT & ERROR HANDLING ---
 
 if ($success) {
-    // แนะนำ: สร้าง ID จำลองขึ้นมาหากนัทยังไม่ได้เขียนระบบ Insert ลง DB
-    // เพื่อให้ปุ่ม 👍👎 ใน index.php ไม่ Error
-    $mock_log_id = (string)time(); 
+    // แนะนำ: ถ้ายังไม่ได้เขียนส่วน INSERT ลงฐานข้อมูลจริงๆ 
+    // ให้ส่ง timestamp หรือ ID สมมติไปก่อนเพื่อให้ JS ไม่ Error ครับ
+    $logId = (string)time(); 
 
     send_json([
         "status" => "success",
         "response" => trim($aiResponse),
-        "log_id" => $mock_log_id  // เติมอันนี้เข้าไปด้วยครับ
+        "log_id" => $logId // เพิ่มบรรทัดนี้ครับ
     ]);
 } else {
     $userFriendlyError = "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้องชั่วคราว (Code: $finalHttpCode)";
@@ -320,6 +320,6 @@ if ($success) {
     send_json([
         "status" => "error",
         "response" => $userFriendlyError,
-        "log_id" => null
+        "log_id" => null // เพิ่มบรรทัดนี้ครับ
     ]);
 }
