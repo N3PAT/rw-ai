@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -30,42 +28,12 @@
         .msg-animate {
             animation: messagePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-.ai-content table {
-    width: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-.ai-content th {
-    background-color: #f1f5f9;
-    font-weight: 600;
-}
-       
-
 
         .feedback-btn {
             transition: all 0.2s ease;
             opacity: 0;
             animation: fadeIn 0.5s ease 0.5s forwards;
         }
-.link-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #ffffff;
-    padding: 8px 12px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    margin: 8px 0;
-    width: 100%;
-    max-width: 300px; /* คุมความกว้างไม่ให้ล้น */
-    text-decoration: none !important; /* ปิดขีดเส้นใต้ */
-}
-.link-card:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -201,258 +169,257 @@
         </div>
     </footer>
 </div>
-<div id="link-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
-    <div id="link-modal-content" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl transform scale-95 transition-all">
-        <div class="text-center">
-            <h3 class="text-lg font-bold mb-2">ยืนยันการเปิดลิงก์</h3>
-            <p class="text-sm text-gray-500 mb-4">คุณต้องการเปิดไปยังเว็บไซต์ภายนอกหรือไม่?</p>
-            <p id="target-link-display" class="text-[10px] text-blue-600 break-all bg-gray-50 p-2 rounded mb-4"></p>
-            <div class="flex gap-2">
-                <button onclick="closeLinkModal()" class="flex-1 py-2 bg-gray-100 rounded-xl text-sm">ยกเลิก</button>
-                <a id="confirm-link-btn" href="#" target="_blank" onclick="closeLinkModal()" class="flex-1 py-2 bg-blue-600 text-white rounded-xl text-sm text-center">ยืนยัน</a>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div id="image-modal" class="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all" onclick="closeImageModal()">
-    <img id="modal-img" src="" class="max-w-full max-h-full rounded-lg transform scale-95 transition-all">
-</div>
 <script>
-    marked.setOptions({ breaks: true, gfm: true });
-    const inputField = document.getElementById('user-input');
-    const container = document.getElementById('chat-container');
-    const stepIndicator = document.getElementById('step-indicator');
-    const sendBtn = document.getElementById('send-btn');
-    const aiStatus = document.getElementById('ai-status');
+marked.setOptions({ breaks: true, gfm: true });
+const inputField = document.getElementById('user-input');
+const container = document.getElementById('chat-container');
+const stepIndicator = document.getElementById('step-indicator');
+const stepText = document.getElementById('step-text');
+const sendBtn = document.getElementById('send-btn');
+const aiStatus = document.getElementById('ai-status');
 
-    function openPopup() {
-        document.getElementById('credit-popup').classList.remove('opacity-0', 'pointer-events-none');
-        document.getElementById('popup-content').classList.replace('scale-95', 'scale-100');
-    }
-    function closePopup() {
-        document.getElementById('credit-popup').classList.add('opacity-0', 'pointer-events-none');
-        document.getElementById('popup-content').classList.replace('scale-100', 'scale-95');
-        setTimeout(() => inputField.focus(), 300);
-    }
-    function scrollToBottom() { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }
+function openPopup() { 
+    document.getElementById('credit-popup').classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('popup-content').classList.replace('scale-95', 'scale-100');
+}
 
-    function autoResizeTextarea() {
-        if (inputField) {
-            inputField.style.height = 'auto'; 
-            inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
-        }
-    }
+function closePopup() { 
+    document.getElementById('credit-popup').classList.add('opacity-0', 'pointer-events-none');
+    document.getElementById('popup-content').classList.replace('scale-100', 'scale-95');
+    setTimeout(() => inputField.focus(), 300);
+}
 
-    function appendMessage(text, isUser, logId = null) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate`;
+aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
+
+function scrollToBottom() {
+    requestAnimationFrame(() => {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    });
+}
+
+// 🛡️ [UPDATE] ฟังก์ชันส่ง Feedback 👍/👎
+async function sendFeedback(logId, rating, btnElement) {
+    if (!logId) return;
     
-    let messageHtml = `
-        ${!isUser ? `
-            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-1 border border-blue-200 overflow-hidden">
-                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
-            </div>` : ''}
-        <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'} p-3.5 px-4 rounded-2xl shadow-sm max-w-[85%] text-sm md:text-base relative ai-content">
-            <div class="msg-text">${isUser ? text : marked.parse(text)}</div>
-            ${!isUser && logId ? `
-                <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
-                    <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
-                    <div class="flex gap-2">
-                        <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-colors" title="มีประโยชน์">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                            </svg>
-                        </button>
-                        <button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="ไม่มีประโยชน์">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>` : ''}
-        </div>
-    `;
-    
-    msgDiv.innerHTML = messageHtml;
-    container.appendChild(msgDiv);
-    
-    // ปรับปรุง: รอให้ Browser วาดข้อความเสร็จก่อนค่อยดักจับ Link Card หรือรูปภาพ
-    if (!isUser) {
-        setTimeout(() => {
-            const contentEl = msgDiv.querySelector('.ai-content');
-            if (contentEl) {
-                processVisuals(contentEl);
-            }
-        }, 50);
+    // แสดง UI ว่ากดแล้ว
+    const parent = btnElement.parentElement;
+    parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">ขอบคุณสำหรับ Feedback ครับ!</span>';
+
+    try {
+        await fetch('update_feedback.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ log_id: logId, rating: rating })
+        });
+    } catch (e) { console.error("Feedback Error:", e); }
+}
+
+function appendMessage(message, isUser = true, logId = null) {
+    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    let msgHtml = '';
+
+    if (isUser) {
+        msgHtml = `
+        <div class="flex justify-end msg-animate w-full">
+            <div class="flex flex-col items-end max-w-[85%]">
+                <div class="bg-blue-600 text-white p-3.5 px-4 rounded-2xl rounded-br-none shadow-md text-sm md:text-base msg-text">${message}</div>
+                <span class="text-[10px] text-gray-400 mt-1 mr-1">${time}</span>
+            </div>
+        </div>`;
+    } else {
+        const markdownMessage = marked.parse(message);
+        // เพิ่มส่วนปุ่ม Feedback ถ้าไม่ใช่ข้อความจาก User
+        const feedbackHtml = logId ? `
+            <div class="flex gap-2 mt-2 feedback-btn">
+                <button onclick="sendFeedback(${logId}, 1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                </button>
+                <button onclick="sendFeedback(${logId}, -1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
+                </button>
+            </div>
+        ` : '';
+
+        msgHtml = `
+        <div class="flex justify-start msg-animate">
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
+                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full">
+            </div>
+            <div class="flex flex-col items-start max-w-[85%] w-full">
+                <div class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full">
+                    ${markdownMessage}
+                </div>
+                ${feedbackHtml}
+                <span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span>
+            </div>
+        </div>`;
     }
-    
+    container.insertAdjacentHTML('beforeend', msgHtml);
     scrollToBottom();
 }
 
-    async function sendMessage() {
-        const message = inputField.value.trim();
-        if (!message || sendBtn.disabled) return;
+async function sendMessage() {
+    const message = inputField.value.trim();
+    if (!message) return;
 
-        sendBtn.disabled = true;
-        inputField.disabled = true;
-        inputField.value = '';
-        autoResizeTextarea();
+    inputField.value = '';
+    inputField.style.height = 'auto';
+    inputField.disabled = true;
+    sendBtn.disabled = true;
+
+    appendMessage(message, true);
+    stepIndicator.classList.remove('hidden');
+    scrollToBottom();
+
+    try {
+        const response = await fetch('chat_process.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
         
-        appendMessage(message, true);
-        stepIndicator.classList.remove('hidden');
-        scrollToBottom();
+        const data = await response.json();
+        stepIndicator.classList.add('hidden');
+        
+        // 🛡️ [UPDATE] นำ response และ log_id ที่ได้จาก PHP มาแสดง
+        appendMessage(data.response || 'พี่ขอโทษครับ ระบบขัดข้องชั่วคราว', false, data.log_id);
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 40000);
-
-        try {
-            const response = await fetch('chat_process.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message }),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            if (!response.ok) throw new Error(`HTTP_${response.status}`);
-
-            const data = await response.json();
-            stepIndicator.classList.add('hidden');
-            
-            const reply = data.response || 'พี่ขอโทษครับ ระบบเกิดข้อผิดพลาดในการประมวลผล';
-            appendMessage(reply, false, data.log_id);
-
-        } catch (e) {
-            clearTimeout(timeoutId);
-            stepIndicator.classList.add('hidden');
-            let errorHint = "เชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง";
-            if (e.name === 'AbortError') errorHint = "การเชื่อมต่อใช้เวลานานเกินไป ลองใหม่อีกครั้งนะครับ";
-            else if (e.message.includes('503')) errorHint = "เซิร์ฟเวอร์ยุ่งมากเลยครับ ลองอีกครั้งใน 10 วินาทีนะ";
-            appendMessage(errorHint, false);
-        } finally {
-            sendBtn.disabled = false;
-            inputField.disabled = false;
-            inputField.focus();
-        }
+    } catch (error) {
+        stepIndicator.classList.add('hidden');
+        appendMessage('ระบบเชื่อมต่อล้มเหลว หรือน้องถามเร็วเกินไปครับ ลองใหม่อีกครั้งนะ', false);
+    } finally {
+        inputField.disabled = false;
+        sendBtn.disabled = false;
+        inputField.focus();
     }
-
-    function processVisuals(element) {
-    // 1. กวาดล้างเศษโค้ดที่ AI อาจจะแถมมาเกิน
-    let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
-
-
-    // 2. จัดการ [SHOW_MAP]
-    const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
-    const mapRegex = /\[\s?SHOW_MAP\s?\]/gi;
-    text = text.replace(mapRegex, `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`);
-
-    // 3. จัดการ [SHOW_IMG:URL]
-    const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
-    text = text.replace(customImgRegex, (match, url) => {
-        const cleanUrl = url.replace(/<[^>]*>?/gm, '').replace(/\s+/g, '').trim();
-        return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
-    });
-
-    // 4. จัดการลิงก์ทั่วไป และแยกประเภทไฟล์รูปภาพอัตโนมัติ
-    const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
-    text = text.replace(urlRegex, (url) => {
-        const cleanUrl = url.trim();
-
-        // ข้ามลิงก์ของระบบ (เช่น SVG ของ W3)
-        if (cleanUrl.includes('w3.org')) return cleanUrl;
-
-        // ถ้าเป็นลิงก์รูปภาพ (jpg, png, webp, etc.) ให้แสดงเป็นรูปเลย
-        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i)) {
-            return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
-        }
-        
-        // ถ้าเป็นลิงก์ทั่วไป ให้ทำเป็น Link Card ที่ต้องกดยืนยันก่อนเปิด
-        return `
-        <div class="my-2">
-            <div onclick="showLinkConfirm('${cleanUrl}')" class="link-card cursor-pointer hover:bg-blue-50 transition-all group">
-                <div class="bg-blue-600 p-2 rounded-lg text-white shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                </div>
-                <div class="flex flex-col overflow-hidden text-left">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">เปิดลิงก์ภายนอก</span>
-                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
-                </div>
-            </div>
-        </div>`;
-    });
-
-    element.innerHTML = text;
 }
 
-
-
-
-    async function sendFeedback(logId, rating, btn) {
-    // เปลี่ยนจากคำว่า "ขอบคุณครับ! 🤖" เป็นข้อความเรียบๆ
-    btn.parentElement.innerHTML = '<span class="text-[10px] text-blue-500 font-medium">บันทึกคำติชมแล้ว ขอบคุณครับ</span>';
-    await fetch('update_feedback.php', { method: 'POST', body: JSON.stringify({ log_id: logId, rating }) });
+function useSuggestion(text) {
+    if (inputField.disabled) return;
+    inputField.value = text;
+    sendMessage();
 }
 
-    function openImageModal(src) {
-        document.getElementById('modal-img').src = src;
-        document.getElementById('image-modal').classList.remove('opacity-0', 'pointer-events-none');
-        document.getElementById('modal-img').classList.replace('scale-95', 'scale-100');
+inputField.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 128) + 'px';
+});
+
+inputField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
     }
+});
 
-    function closeImageModal() {
-        document.getElementById('image-modal').classList.add('opacity-0', 'pointer-events-none');
-        document.getElementById('modal-img').classList.replace('scale-100', 'scale-95');
-    }
-
-    function useSuggestion(text) { 
-        inputField.value = text; 
-        autoResizeTextarea();
-        sendMessage(); 
-    }
-
-    // --- แก้ไขจุดรันสคริปต์ให้ทำงานทันที ---
-    document.addEventListener('DOMContentLoaded', () => {
-        aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
-        
-        // TOS Logic
-        document.getElementById('tos-checkbox').addEventListener('change', function() {
-            const btn = document.getElementById('start-btn');
-            btn.disabled = !this.checked;
-            btn.className = this.checked ? "w-full bg-blue-600 text-white font-medium py-3 rounded-xl transition-all" : "w-full bg-gray-200 text-gray-400 font-medium py-3 rounded-xl";
-        });
-
-        document.getElementById('start-btn').addEventListener('click', closePopup);
-        inputField.addEventListener('input', autoResizeTextarea);
-        inputField.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                sendMessage(); 
-            } 
-        });
-
-        setTimeout(openPopup, 500);
-    });
+window.onload = () => setTimeout(openPopup, 100);
 </script>
-<script>
-function showLinkConfirm(url) {
-    const modal = document.getElementById('link-modal');
-    document.getElementById('target-link-display').innerText = url;
-    document.getElementById('confirm-link-btn').href = url;
-    modal.classList.remove('opacity-0', 'pointer-events-none');
-    document.getElementById('link-modal-content').classList.replace('scale-95', 'scale-100');
-}
+    <script>
+    function toggleStartButton() {
+        const checkbox = document.getElementById('tos-checkbox');
+        const btn = document.getElementById('start-btn');
+        
+        if (checkbox.checked) {
+            // เมื่อติ๊กยอมรับ ให้เปิดใช้งานปุ่มและเปลี่ยนสีเป็นสีน้ำเงิน
+            btn.disabled = false;
+            btn.className = "w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] duration-300 cursor-pointer";
+        } else {
+            // เมื่อเอาติ๊กออก ให้ล็อกปุ่มและเปลี่ยนเป็นสีเทา
+            btn.disabled = true;
+            btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
+        }
+    }
+    </script>
+    <script>
+    const box = document.getElementById('tos-box');
+    const linkBox = document.getElementById('tos-link');
+    const checkbox = document.getElementById('tos-checkbox');
+    const btn = document.getElementById('start-btn');
 
-function closeLinkModal() {
-    const modal = document.getElementById('link-modal');
-    modal.classList.add('opacity-0', 'pointer-events-none');
-    document.getElementById('link-modal-content').classList.replace('scale-100', 'scale-95');
-}
+    let unlocked = false;
 
+    box.addEventListener('scroll', () => {
+        const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 5;
+
+        if (atBottom) {
+            unlocked = true;
+            linkBox.classList.remove('pointer-events-none', 'opacity-50', 'cursor-not-allowed');
+            linkBox.classList.add('opacity-100', 'cursor-pointer');
+        }
+    });
+
+    linkBox.addEventListener('click', () => {
+        if (!unlocked) return;
+        window.location.href = 'privacy_policy.php';
+    });
+
+    checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+            btn.disabled = false;
+            btn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all duration-300";
+        } else {
+            btn.disabled = true;
+            btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
+        }
+    });
+
+    btn.addEventListener('click', () => {
+        if (!checkbox.checked) return;
+        closePopup();
+    });
+    </script>
+    <script>// ฟังก์ชันเปิด Modal ขยายรูป
+function openImageModal(src) {
+    const modal = document.getElementById('image-modal');
+    const modalImg = document.getElementById('modal-img');
     
-</script>
+    modalImg.src = src;
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    
+    setTimeout(() => {
+        modalImg.classList.remove('scale-95');
+        modalImg.classList.add('scale-100');
+    }, 10);
+}
 
+// ฟังก์ชันปิด Modal
+function closeImageModal() {
+    const modal = document.getElementById('image-modal');
+    const modalImg = document.getElementById('modal-img');
+    
+    modalImg.classList.remove('scale-100');
+    modalImg.classList.add('scale-95');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    
+    setTimeout(() => {
+        modalImg.src = '';
+    }, 300);
+}
+
+// เพิ่ม Event Listener ให้กับรูปภาพที่เกิดขึ้นใน Chat Container
+container.addEventListener('click', function(e) {
+    // ถ้าสิ่งที่คลิกคือรูปภาพ (img) ที่อยู่ในกล่องข้อความ AI
+    if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
+        openImageModal(e.target.src);
+    }
+});
+</script>
+<div id="image-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeImageModal()">
+    <button class="absolute top-5 right-5 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <img id="modal-img" src="" class="max-w-[95%] max-h-[90dvh] rounded-lg shadow-2xl object-contain scale-95 transition-transform duration-300" alt="Full Preview">
+</div>
+<script>
+  // ฟังก์ชันสำหรับใช้คำถามแนะนำ
+function useSuggestion(text) {
+    if (inputField.disabled) return; // ป้องกันการกดซ้ำขณะ AI กำลังตอบ
+    inputField.value = text;
+    autoResizeTextarea();
+    sendMessage();
+}
+
+</script>
 </body>
 </html>
-          
