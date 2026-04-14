@@ -27,13 +27,15 @@ $config = [
         "user" => getenv('DB_USER'),
         "pass" => getenv('DB_PASS'),
         "name" => getenv('DB_NAME'),
-        "port" => (int)getenv('DB_PORT') 
+        "port" => (int)(getenv('DB_PORT') ?: 14495)
     ],
     "gemini" => [
-        "api_key" => getenv('GEMINI_API_KEY'),
-        "model"   => getenv('GEMINI_MODEL')
+        // เพิ่ม trim() เพื่อตัด space หัวท้าย
+        "api_key" => trim((string)getenv('GEMINI_API_KEY')),
+        "model"   => trim((string)getenv('GEMINI_MODEL')) ?: 'gemini-1.5-flash'
     ]
 ];
+
 
 function send_json(array $data): void {
     global $conn;
