@@ -336,38 +336,27 @@
     }
 
     // 2. จัดการรูปภาพ [SHOW_IMG:URL]
-    const imgRegex = /\[SHOW_IMG:(.*?)\]/gi;
+    const imgRegex = /\[SHOW_IMG:(https?:\/\/[^\]\s]+)\]/gi;
     text = text.replace(imgRegex, (match, url) => {
-        const cleanUrl = url.trim().replace(/[\]\)\>\s\'\"]/g, '');
-        return `
-            <div class="my-4">
-                <img src="${cleanUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" 
-                     onclick="openImageModal('${cleanUrl}')" 
-                     onerror="this.parentElement.style.display='none'">
-            </div>`;
+        return `<div class="my-4"><img src="${url}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${url}')" onerror="this.parentElement.style.display='none'"></div>`;
     });
 
-    // 3. จัดการลิงก์ภายนอก (ตัวปัญหา) - ใช้ Regex ที่ฉลาดขึ้น
-    // กฎ: ต้องเป็น https และต้องไม่ตามหลังด้วย xmlns หรืออยู่ในเครื่องหมายคำพูดของ tag
-    const urlRegex = /(?<!xmlns=")(?<!src=")(?<!href=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg)))/gi;
+    // 3. จัดการลิงก์ (เพิ่มเงื่อนไข: ต้องเป็นพื้นที่ว่างรอบข้างเท่านั้น ถึงจะกลายเป็นกล่องลิงก์)
+    // วิธีนี้จะป้องกันไม่ให้มันไปยุ่งกับ URL ที่อยู่ใน <img src="..."> หรือ <svg xmlns="...">
+    const urlRegex = /(?<!src=")(?<!href=")(?<!") (https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg|pn)))/gi;
     
     text = text.replace(urlRegex, (url) => {
-        const cleanUrl = url.trim().replace(/[\]\)\>\s\'\"]/g, '');
-        // ป้องกันกรณีลิงก์สั้นเกินไปหรือเป็นแค่โดเมนของระบบ
-        if (cleanUrl.length < 15 || cleanUrl.includes('w3.org')) return url;
+        const cleanUrl = url.trim().replace(/[\]\)\>\'\"]/g, '');
+        if (cleanUrl.includes('w3.org')) return url; // ข้าม SVG namespace
 
         return `
             <div class="my-2">
                 <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
                     <div class="bg-blue-600 p-2 rounded-lg text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     </div>
                     <div class="flex flex-col overflow-hidden text-left ml-2">
-                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tight">เว็บไซต์เพิ่มเติม</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold">เว็บไซต์เพิ่มเติม</span>
                         <span class="text-blue-600 font-medium truncate text-xs w-48">${cleanUrl}</span>
                     </div>
                 </a>
