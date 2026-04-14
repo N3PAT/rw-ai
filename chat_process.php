@@ -39,11 +39,6 @@ if (!empty($config['gemini']['api_keys'])) {
     shuffle($config['gemini']['api_keys']);
 }
 
-// ปรับเช็คเงื่อนไข (ต้องมีอย่างน้อย 1 Key)
-if (!$config['db']['host'] || empty($config['gemini']['api_keys'])) {
-     send_json(["response" => "ระบบขัดข้อง: ตั้งค่า API Keys หรือ DB ไม่สมบูรณ์ครับ"]);
-}
-
 function send_json(array $data): void {
     global $conn;
     if (isset($conn) && $conn instanceof mysqli) {
@@ -284,14 +279,13 @@ foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
         }
     }
 
-    // ⚠️ ถ้าติด Quota (429) ให้วนไปใช้ Key ถัดไป
-    if ($httpCode === 429) {
+        // ⚠️ ถ้าติด Quota (429) หรือ Google Server เอ๋อ (5xx) ให้สลับไป Key ถัดไป
+    if ($httpCode === 429 || ($httpCode >= 500 && $httpCode <= 599)) {
         continue; 
     } 
     
-    // ❌ ถ้า Error อื่นๆ (เช่น 400 หรือ 404) มักจะเป็นที่ Payload หรือชื่อ Model ผิด ให้หยุดลูป
+    // ถ้า Error อื่นๆ เช่น 400 (ส่งข้อมูลผิด) ไม่ต้องลอง Key อื่น ให้หยุดเลย
     break; 
-}
 
 
 
