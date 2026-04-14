@@ -206,7 +206,6 @@
 <div id="image-modal" class="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all" onclick="closeImageModal()">
     <img id="modal-img" src="" class="max-w-full max-h-full rounded-lg transform scale-95 transition-all">
 </div>
-
 <script>
     marked.setOptions({ breaks: true, gfm: true });
     const inputField = document.getElementById('user-input');
@@ -226,258 +225,170 @@
     }
     function scrollToBottom() { container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' }); }
 
-    function formatLinks(text) {
-    // 1. จัดการรูปภาพที่อยู่ใน [IMG]...[/IMG]
-    const customImgRegex = /\[IMG\]\s*([\s\S]*?)\s*\[\/IMG\]/gi;
-    
-    let processed = text.replace(customImgRegex, (match, url) => {
-        // ล้างช่องว่างหรือการขึ้นบรรทัดใหม่ที่ AI แอบใส่มาใน URL
-        const cleanUrl = url.replace(/\s+/g, '').trim();
-        return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')" onerror="this.parentElement.innerHTML='<p class=\"text-xs text-red-500\">ไม่สามารถโหลดรูปภาพได้</p>'"></div>`;
-    });
-
-    // 2. จัดการลิงก์อื่นๆ ที่เหลือ (ที่ไม่ใช่รูปภาพ)
-    const urlRegex = /(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp|svg)))/gi;
-    
-    processed = processed.replace(urlRegex, (url) => {
-        const cleanUrl = url.trim();
-        // ถ้าเป็นส่วนหนึ่งของ tag HTML อยู่แล้ว ไม่ต้องยุ่ง
-        if (processed.includes(`src="${cleanUrl}"`) || processed.includes(`href="${cleanUrl}"`)) return cleanUrl;
-        
-        return `
-        <div class="my-2">
-            <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                </div>
-                <div class="flex flex-col overflow-hidden text-left">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
-                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
-                </div>
-            </a>
-        </div>`;
-    });
-
-    return processed;
-}
-
-
-
-
-function autoResizeTextarea() {
-    const inputField = document.getElementById('user-input');
-    if (inputField) {
-        inputField.style.height = 'auto'; // รีเซ็ตความสูงก่อนคำนวณใหม่
-        // ปรับความสูงตามเนื้อหาจริง แต่ไม่เกิน 128px
-        inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+    function autoResizeTextarea() {
+        if (inputField) {
+            inputField.style.height = 'auto'; 
+            inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+        }
     }
-}
+
     function appendMessage(text, isUser, logId = null) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate`;
-    
-    // สร้าง HTML สำหรับข้อความ
-    let messageHtml = `
-        ${!isUser ? `
-            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-1 border border-blue-200 overflow-hidden">
-                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
-            </div>` : ''}
-        <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'} p-3.5 px-4 rounded-2xl shadow-sm max-w-[85%] text-sm md:text-base relative ai-content">
-            <div class="msg-text">${isUser ? text : marked.parse(text)}</div>
-            ${!isUser && logId ? `
-                <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
-                    <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
-                    <div class="flex gap-2">
-                        <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1 hover:bg-blue-50 rounded text-blue-400">👍</button>
-                        <button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1 hover:bg-red-50 rounded text-red-400">👎</button>
-                    </div>
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate`;
+        
+        let messageHtml = `
+            ${!isUser ? `
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-1 border border-blue-200 overflow-hidden">
+                    <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
                 </div>` : ''}
-        </div>
-    `;
-    
-    msgDiv.innerHTML = messageHtml;
-    container.appendChild(msgDiv);
-    
-    // ถ้าเป็น AI ตอบ ให้จัดการพวกรูปภาพและลิงก์ด้วย
-    if (!isUser) {
-        processVisuals(msgDiv.querySelector('.ai-content'));
+            <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'} p-3.5 px-4 rounded-2xl shadow-sm max-w-[85%] text-sm md:text-base relative ai-content">
+                <div class="msg-text">${isUser ? text : marked.parse(text)}</div>
+                ${!isUser && logId ? `
+                    <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
+                        <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
+                        <div class="flex gap-2">
+                            <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1 hover:bg-blue-50 rounded text-blue-400">👍</button>
+                            <button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1 hover:bg-red-50 rounded text-red-400">👎</button>
+                        </div>
+                    </div>` : ''}
+            </div>
+        `;
+        
+        msgDiv.innerHTML = messageHtml;
+        container.appendChild(msgDiv);
+        
+        if (!isUser) {
+            processVisuals(msgDiv.querySelector('.ai-content'));
+        }
+        
+        scrollToBottom();
     }
-    
-    scrollToBottom();
-}
 
-        // --- ปรับปรุงส่วนการส่งข้อความให้เสถียรขึ้น ---
-async function sendMessage() {
-    const message = inputField.value.trim();
-    if (!message || sendBtn.disabled) return;
+    async function sendMessage() {
+        const message = inputField.value.trim();
+        if (!message || sendBtn.disabled) return;
 
-    sendBtn.disabled = true;
-    inputField.disabled = true;
-    inputField.value = '';
-    autoResizeTextarea();
-    
-    appendMessage(message, true);
-    stepIndicator.classList.remove('hidden');
-    scrollToBottom();
+        sendBtn.disabled = true;
+        inputField.disabled = true;
+        inputField.value = '';
+        autoResizeTextarea();
+        
+        appendMessage(message, true);
+        stepIndicator.classList.remove('hidden');
+        scrollToBottom();
 
-    // สร้างตัวควบคุม Timeout (40 วินาที)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 40000);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 40000);
 
-    try {
-        const response = await fetch('chat_process.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message }),
-            signal: controller.signal // เชื่อมต่อกับระบบตัดสาย
-        });
+        try {
+            const response = await fetch('chat_process.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message }),
+                signal: controller.signal
+            });
 
-        clearTimeout(timeoutId); // ยกเลิก Timeout เมื่อได้รับข้อมูล
+            clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            throw new Error(`HTTP_${response.status}`);
+            if (!response.ok) throw new Error(`HTTP_${response.status}`);
+
+            const data = await response.json();
+            stepIndicator.classList.add('hidden');
+            
+            const reply = data.response || 'พี่ขอโทษครับ ระบบเกิดข้อผิดพลาดในการประมวลผล';
+            appendMessage(reply, false, data.log_id);
+
+        } catch (e) {
+            clearTimeout(timeoutId);
+            stepIndicator.classList.add('hidden');
+            let errorHint = "เชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง";
+            if (e.name === 'AbortError') errorHint = "การเชื่อมต่อใช้เวลานานเกินไป ลองใหม่อีกครั้งนะครับ";
+            else if (e.message.includes('503')) errorHint = "เซิร์ฟเวอร์ยุ่งมากเลยครับ ลองอีกครั้งใน 10 วินาทีนะ";
+            appendMessage(errorHint, false);
+        } finally {
+            sendBtn.disabled = false;
+            inputField.disabled = false;
+            inputField.focus();
+        }
+    }
+
+    function processVisuals(element) {
+        let text = element.innerHTML;
+
+        // 1. แผนผัง [SHOW_MAP]
+        const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
+        if (text.includes('[SHOW_MAP]')) {
+            const imgHtml = `<div class="my-4"><img src="${mapUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${mapUrl}')"></div>`;
+            text = text.replace('[SHOW_MAP]', imgHtml);
         }
 
-        const data = await response.json();
-        stepIndicator.classList.add('hidden');
-        
-        // ตรวจสอบโครงสร้างข้อมูลที่ส่งกลับมา
-        const reply = data.response || 'พี่ขอโทษครับ ระบบเกิดข้อผิดพลาดในการประมวลผล';
-        appendMessage(reply, false, data.log_id);
+        // 2. รูปภาพอื่นๆ [SHOW_IMG:URL] (แก้ Regex ให้ไม่กินข้อความไทย)
+        const imgRegex = /\[SHOW_IMG:(https?:\/\/[^\]\s]+)\]/gi;
+        text = text.replace(imgRegex, (match, url) => {
+            return `<div class="my-4"><img src="${url}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" onclick="openImageModal('${url}')" onerror="this.parentElement.style.display='none'"></div>`;
+        });
 
-    } catch (e) {
-        clearTimeout(timeoutId);
-        stepIndicator.classList.add('hidden');
-        
-        let errorHint = "เชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง";
-        if (e.name === 'AbortError') errorHint = "การเชื่อมต่อใช้เวลานานเกินไป (Timeout) ลองใหม่อีกครั้งนะครับ";
-        else if (e.message.includes('HTTP_503')) errorHint = "เซิร์ฟเวอร์ไม่พร้อมใช้งาน (Error 503) ลองอีกครั้งใน 10 วินาทีนะ";
-        
-        appendMessage(errorHint, false);
-        console.error("Chat Error:", e);
-    } finally {
-        sendBtn.disabled = false;
-        inputField.disabled = false;
-        inputField.focus();
+        // 3. ลิงก์ (เน้นความแม่นยำ)
+        const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
+        text = text.replace(urlRegex, (url) => {
+            return `<div class="my-2"><a href="${url}" class="link-card hover:bg-blue-50" target="_blank">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">🔗</div>
+                <div class="flex flex-col overflow-hidden text-left ml-2">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">เข้าสู่เว็บไซต์</span>
+                    <span class="text-blue-600 font-medium truncate text-xs w-48">${url}</span>
+                </div></a></div>`;
+        });
+
+        element.innerHTML = text;
     }
-}
-
-
-
-function processVisuals(element) {
-    let text = element.innerHTML;
-
-    // 1. จัดการแผนผัง [SHOW_MAP]
-    const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
-    if (text.includes('[SHOW_MAP]')) {
-        const imgHtml = `
-            <div class="my-4 animate-fade-in">
-                <p class="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-widest">แผนผังบริเวณโรงเรียน</p>
-                <img src="${mapUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100 hover:scale-[1.02] transition-transform" onclick="openImageModal('${mapUrl}')">
-            </div>`;
-        text = text.replace('[SHOW_MAP]', imgHtml);
-    }
-
-    // 2. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
-    const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
-    text = text.replace(customImgRegex, (match, url) => {
-        // ล้าง URL ให้สะอาด (ลบช่องว่างและวงเล็บปิดที่อาจติดมา)
-        const cleanUrl = url.trim().replace(/[\]\)\>\s]/g, ''); 
-        return `
-            <div class="my-4 animate-fade-in">
-                <img src="${cleanUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" 
-                     onclick="openImageModal('${cleanUrl}')" 
-                     onerror="this.parentElement.style.display='none'">
-            </div>`;
-    });
-
-    // 3. จัดการลิงก์ (แก้ไข Regex ไม่ให้กินข้อความปกติ)
-    const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
-    text = text.replace(urlRegex, (url) => {
-        const cleanUrl = url.trim().replace(/[\]\)\>]/g, '');
-        return `
-            <div class="my-2">
-                <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
-                    <div class="bg-blue-600 p-2 rounded-lg text-white group-hover:rotate-12 transition-transform">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                    </div>
-                    <div class="flex flex-col overflow-hidden text-left">
-                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">เข้าสู่เว็บไซต์</span>
-                        <span class="text-blue-600 font-medium truncate text-xs w-48">${cleanUrl}</span>
-                    </div>
-                </a>
-            </div>`;
-    });
-
-    element.innerHTML = text;
-}
-
 
     async function sendFeedback(logId, rating, btn) {
         btn.parentElement.innerHTML = '<span class="text-[10px] text-blue-500">ขอบคุณครับ!</span>';
         await fetch('update_feedback.php', { method: 'POST', body: JSON.stringify({ log_id: logId, rating }) });
     }
 
-    // Modal Controls
-    function openLinkModal(url) {
-        document.getElementById('target-link-display').textContent = url;
-        document.getElementById('confirm-link-btn').href = url;
-        document.getElementById('link-modal').classList.remove('opacity-0', 'pointer-events-none');
-        document.getElementById('link-modal-content').classList.replace('scale-95', 'scale-100');
-    }
-    function closeLinkModal() {
-        document.getElementById('link-modal').classList.add('opacity-0', 'pointer-events-none');
-        document.getElementById('link-modal-content').classList.replace('scale-100', 'scale-95');
-    }
     function openImageModal(src) {
         document.getElementById('modal-img').src = src;
         document.getElementById('image-modal').classList.remove('opacity-0', 'pointer-events-none');
         document.getElementById('modal-img').classList.replace('scale-95', 'scale-100');
     }
+
     function closeImageModal() {
         document.getElementById('image-modal').classList.add('opacity-0', 'pointer-events-none');
         document.getElementById('modal-img').classList.replace('scale-100', 'scale-95');
     }
 
-    // Container Event Delegation (Handle images and links)
-    container.addEventListener('click', (e) => {
-        const img = e.target.closest('.ai-content img');
-        if (img) return openImageModal(img.src);
-        
-        const link = e.target.closest('.ai-content a');
-        if (link) {
-            const url = link.getAttribute('href');
-            if (url.match(/\.(jpeg|jpg|gif|png)$/) != null) return; 
-            e.preventDefault();
-            openLinkModal(url);
-        }
-    });
-
     function useSuggestion(text) { 
-    inputField.value = text; 
-    autoResizeTextarea(); // เพิ่มบรรทัดนี้
-    sendMessage(); 
-}
+        inputField.value = text; 
+        autoResizeTextarea();
+        sendMessage(); 
+    }
 
-    inputField.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-    // TOS Logic
-    document.getElementById('tos-checkbox').addEventListener('change', function() {
-        const btn = document.getElementById('start-btn');
-        btn.disabled = !this.checked;
-        btn.className = this.checked ? "w-full bg-blue-600 text-white font-medium py-3 rounded-xl transition-all" : "w-full bg-gray-200 text-gray-400 font-medium py-3 rounded-xl";
-    });
-    document.getElementById('start-btn').addEventListener('click', closePopup);
-
-    window.onload = () => {
+    // --- แก้ไขจุดรันสคริปต์ให้ทำงานทันที ---
+    document.addEventListener('DOMContentLoaded', () => {
         aiStatus.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> AI พร้อมใช้งานแล้ว';
+        
+        // TOS Logic
+        document.getElementById('tos-checkbox').addEventListener('change', function() {
+            const btn = document.getElementById('start-btn');
+            btn.disabled = !this.checked;
+            btn.className = this.checked ? "w-full bg-blue-600 text-white font-medium py-3 rounded-xl transition-all" : "w-full bg-gray-200 text-gray-400 font-medium py-3 rounded-xl";
+        });
+
+        document.getElementById('start-btn').addEventListener('click', closePopup);
+        inputField.addEventListener('input', autoResizeTextarea);
+        inputField.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                sendMessage(); 
+            } 
+        });
+
         setTimeout(openPopup, 500);
-    };
-
-    inputField.addEventListener('input', autoResizeTextarea);
-
-
+    });
 </script>
+
+
 </body>
 </html>
           
