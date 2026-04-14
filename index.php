@@ -93,82 +93,33 @@ input, textarea {
         .ai-content table { border-collapse: collapse; width: 100%; margin-bottom: 0.5rem; font-size: 0.9em; }
         .ai-content th, .ai-content td { border: 1px solid #e2e8f0; padding: 0.4rem 0.6rem; }
         
-body.dark-mode {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #f8fafc;
-}
 
 
-.dark-mode .ai-content strong {
-    color: #93c5fd; 
-}
-
-.dark-mode .ai-content th, 
-.dark-mode .ai-content td {
-    border-color: #334155;
-    color: #cbd5e1;
-}
-
-.dark-mode ::-webkit-scrollbar-thumb {
-    background: #475569;
-}
-.dark-mode ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
-}
-
-.dark-mode input, .dark-mode textarea {
-    background-color: #1e293b;
-    color: #ffffff;
-    border: 1px solid #334155;
-}
-        #dark-mode-toggle {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    z-index: 1000;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: all 0.3s ease;
-    padding: 0;
-}
-
-/* ปรับสี Icon ในโหมดปกติ */
-#dark-mode-toggle svg {
-    width: 20px;
-    height: 20px;
-    stroke: #1e293b; /* สีเทาเข้ม */
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-/* เมื่ออยู่ใน Dark Mode ให้เปลี่ยนสีปุ่มและสี Icon */
-.dark-mode #dark-mode-toggle {
-    background-color: #1e293b;
-    border-color: #334155;
-}
-
-.dark-mode #dark-mode-toggle svg {
-    stroke: #f8fafc; /* สีขาวนวล */
-}
-
-/* ซ่อน Icon ที่ไม่ได้ใช้งาน */
+/* จัดการการแสดงผลไอคอนสลับโหมด */
 .sun-icon { display: none; }
 .moon-icon { display: block; }
 
-/* สลับการแสดงผลเมื่อเป็น Dark Mode */
-.dark-mode .sun-icon { display: block; }
-.dark-mode .moon-icon { display: none; }
-/* ปรับแต่งสไตล์ Icon ใน Toast */
+body.dark-mode .sun-icon { display: block; }
+body.dark-mode .moon-icon { display: none; }
+
+/* ปรับ Header เมื่อเป็น Dark Mode */
+body.dark-mode header {
+    background: linear-gradient(to right, #0f172a, #1e293b) !important;
+}
+
+/* ปรับสีพื้นหลัง Main Chat เมื่อเป็น Dark Mode */
+body.dark-mode main, body.dark-mode footer {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+/* ปรับสีกล่องข้อความ AI เมื่อเป็น Dark Mode */
+body.dark-mode .ai-content {
+    background-color: #334155;
+    color: #f8fafc;
+    border-color: #475569;
+}
+
 .toast-icon {
     display: flex;
     align-items: center;
@@ -245,9 +196,10 @@ body.dark-mode .toast-online .toast-icon { color: #34d399; }
     </div>
 
     <button id="dark-mode-toggle" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors outline-none">
-        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        <svg class="sun-icon hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-    </button>
+    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+</button>
+
 
     <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
@@ -542,85 +494,71 @@ function useSuggestion(text) {
 }
 
 </script>
-    <script>
-// ลงทะเบียน Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then(reg => console.log('RW-AI PWA พร้อมใช้งาน!'))
-      .catch(err => console.log('PWA ติดปัญหา:', err));
-  });
-}
-});
-    </script>
-        
-        
+<div id="toast-container"></div>
+
 <script>
-const toggleBtn = document.getElementById('dark-mode-toggle');
-const body = document.body;
+    // === [ A: DARK MODE LOGIC ] ===
+    const toggleBtn = document.getElementById('dark-mode-toggle');
+    const body = document.body;
 
-// ตรวจสอบสถานะเดิม
-if (localStorage.getItem('theme-mode') === 'dark') {
-    body.classList.add('dark-mode');
-}
-
-toggleBtn.addEventListener('click', () => {
-    body.classList.toggle('dark-mode');
-    
-    // บันทึกค่าลงเครื่อง
-    if (body.classList.contains('dark-mode')) {
-        localStorage.setItem('theme-mode', 'dark');
-    } else {
-        localStorage.setItem('theme-mode', 'light');
+    if (localStorage.getItem('theme-mode') === 'dark') {
+        body.classList.add('dark-mode');
     }
-});
 
-    
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('theme-mode', isDark ? 'dark' : 'light');
+        });
+    }
+
+    // === [ B: TOAST NOTIFICATION LOGIC ] ===
+    function showToast(message, type = 'info', duration = 4000) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type} no-select`;
+
+        const icons = {
+            offline: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`,
+            online: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+            info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
+        };
+
+        const selectedIcon = icons[type] || icons.info;
+        toast.innerHTML = `
+            <div class="toast-icon">${selectedIcon}</div>
+            <div class="toast-message">${message}</div>
+        `;
+        
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 100);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, duration);
+    }
+
+    // ตรวจจับสถานะเน็ต
+    window.addEventListener('offline', () => {
+        showToast('ขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจตอบช้าลงนะครับ', 'offline', 5000);
+    });
+
+    window.addEventListener('online', () => {
+        showToast('กลับมาเชื่อมต่อแล้ว! ถามพี่ RW-AI ต่อได้เลยครับ', 'online', 3000);
+    });
+
+    // === [ C: SERVICE WORKER ] ===
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('RW-AI PWA Ready!'))
+                .catch(err => console.log('PWA Error:', err));
+        });
+    }
 </script>
 
-    <script>
-
-        <script>
-function showToast(message, type = 'info', duration = 4000) {
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    
-    toast.className = `toast toast-${type} no-select`;
-
-    // เตรียม SVG Icons
-    const icons = {
-        offline: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`,
-        online: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
-        info: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
-    };
-
-    const selectedIcon = icons[type] || icons.info;
-
-    toast.innerHTML = `
-        <div class="toast-icon">${selectedIcon}</div>
-        <div class="toast-message">${message}</div>
-    `;
-    
-    container.appendChild(toast);
-
-    setTimeout(() => toast.classList.add('show'), 100);
-
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 400);
-    }, duration);
-}
-
-// ผูกเหตุการณ์เน็ตหลุด/กลับมา
-window.addEventListener('offline', () => {
-  showToast('ขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจตอบช้าลงนะครับ', 'offline', 5000);
-});
-
-window.addEventListener('online', () => {
-  showToast('กลับมาเชื่อมต่อแล้ว! ถามพี่ RW-AI ต่อได้เลยครับ', 'online', 3000);
-});
-</script>
-
-    </script>
 </body>
 </html>
