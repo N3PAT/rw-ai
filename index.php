@@ -272,113 +272,114 @@ function autoResizeTextarea() {
         inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
     }
 }
-        async function sendMessage() {
+        // --- ปรับปรุงส่วนการส่งข้อความให้เสถียรขึ้น ---
+async function sendMessage() {
     const message = inputField.value.trim();
-    if (!message || sendBtn.disabled) return; // กันการกดรัว
+    if (!message || sendBtn.disabled) return;
 
-    sendBtn.disabled = true; // ล็อคปุ่มส่ง
-    inputField.disabled = true; // ล็อคช่องพิมพ์
-    
+    sendBtn.disabled = true;
+    inputField.disabled = true;
     inputField.value = '';
-    autoResizeTextarea(); // รีเซ็ตความสูงช่องพิมพ์กลับเป็น 1 บรรทัด
+    autoResizeTextarea();
     
     appendMessage(message, true);
     stepIndicator.classList.remove('hidden');
     scrollToBottom();
 
+    // สร้างตัวควบคุม Timeout (40 วินาที)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 40000);
+
     try {
         const response = await fetch('chat_process.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message }),
+            signal: controller.signal // เชื่อมต่อกับระบบตัดสาย
         });
+
+        clearTimeout(timeoutId); // ยกเลิก Timeout เมื่อได้รับข้อมูล
+
+        if (!response.ok) {
+            throw new Error(`HTTP_${response.status}`);
+        }
+
         const data = await response.json();
         stepIndicator.classList.add('hidden');
-        appendMessage(data.response || 'ระบบขัดข้อง', false, data.log_id);
+        
+        // ตรวจสอบโครงสร้างข้อมูลที่ส่งกลับมา
+        const reply = data.response || 'พี่ขอโทษครับ ระบบเกิดข้อผิดพลาดในการประมวลผล';
+        appendMessage(reply, false, data.log_id);
+
     } catch (e) {
+        clearTimeout(timeoutId);
         stepIndicator.classList.add('hidden');
-        appendMessage('เชื่อมต่อล้มเหลว', false);
+        
+        let errorHint = "เชื่อมต่อล้มเหลว กรุณาลองใหม่อีกครั้ง";
+        if (e.name === 'AbortError') errorHint = "การเชื่อมต่อใช้เวลานานเกินไป (Timeout) ลองใหม่อีกครั้งนะครับ";
+        else if (e.message.includes('HTTP_503')) errorHint = "เซิร์ฟเวอร์ไม่พร้อมใช้งาน (Error 503) ลองอีกครั้งใน 10 วินาทีนะ";
+        
+        appendMessage(errorHint, false);
+        console.error("Chat Error:", e);
     } finally {
-        sendBtn.disabled = false; // ปลดล็อคปุ่ม
-        inputField.disabled = false; // ปลดล็อคช่องพิมพ์
+        sendBtn.disabled = false;
+        inputField.disabled = false;
         inputField.focus();
     }
 }
 
-
-    function appendMessage(message, isUser = true, logId = null) {
-    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    let htmlContent;
-
-    if (isUser) {
-        htmlContent = message;
-    } else {
-        // 1. แปลง Markdown ปกติก่อนเลย
-        htmlContent = marked.parse(message);
-    }
-
-    const feedback = (!isUser && logId) ? `<div class="flex gap-2 mt-2 feedback-btn"><button onclick="sendFeedback(${logId}, 1, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคมีประโยชน์</button><button onclick="sendFeedback(${logId}, 0, this)" class="text-[10px] px-2 py-1 bg-gray-100 rounded-md">ประโยคไม่ชัดเจน</button></div>` : '';
-
-    const msgHtml = `<div class="flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate w-full">
-        ${!isUser ? '<div class="w-8 h-8 rounded-full mr-2 self-end mb-1 shrink-0 overflow-hidden border border-blue-200"><img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover"></div>' : ''}
-        <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[85%]">
-            <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white text-gray-800 rounded-bl-none shadow-sm border border-gray-100'} p-3.5 px-4 rounded-2xl text-sm ai-content">
-                ${htmlContent}
-            </div>
-            ${feedback}
-            <span class="text-[10px] text-gray-400 mt-1">${time}</span>
-        </div>
-    </div>`;
-
-    container.insertAdjacentHTML('beforeend', msgHtml);
-    
-    // --- จุดสำคัญ: สั่งให้จัดการลิงก์และรูปภาพใน Element ล่าสุดที่เพิ่งสร้าง ---
-    const lastMsg = container.lastElementChild.querySelector('.ai-content');
-    processVisuals(lastMsg);
-    
-    scrollToBottom();
-}
-
+// --- ปรับปรุงการจัดการรูปภาพและลิงก์ให้ "ฉลาด" ขึ้น ---
 function processVisuals(element) {
-    // 1. กวาดล้างเศษโค้ดที่ AI ชอบแถมมา (เช่น ')"> หรือ ">)
-    let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
+    let text = element.innerHTML;
+
+    // 1. ล้างเศษอักขระที่ AI ชอบใส่เกินมาใน URL (เช่น ') หรือ ") หรือ >)
+    text = text.replace(/('|")?\)?(\]?\s?(&gt;|>))/g, ' ');
 
     // 2. จัดการแผนผัง [SHOW_MAP]
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     if (text.includes('[SHOW_MAP]')) {
-        const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
+        const imgHtml = `
+            <div class="my-4 animate-fade-in">
+                <p class="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-widest">แผนผังบริเวณโรงเรียน</p>
+                <img src="${mapUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100 hover:scale-[1.02] transition-transform" onclick="openImageModal('${mapUrl}')">
+            </div>`;
         text = text.replace('[SHOW_MAP]', imgHtml);
     }
 
     // 3. จัดการรูปภาพอื่นๆ [SHOW_IMG:URL]
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
-        const cleanUrl = url.replace(/<[^>]*>?/gm, '').replace(/\s+/g, '').trim();
-        return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
+        // ล้าง URL ให้สะอาดที่สุด
+        const cleanUrl = url.trim().split(' ')[0].replace(/[\]\)\>]/g, ''); 
+        return `
+            <div class="my-4 animate-fade-in">
+                <img src="${cleanUrl}" class="max-w-full rounded-2xl shadow-md cursor-zoom-in border-4 border-white ring-1 ring-gray-100" 
+                     onclick="openImageModal('${cleanUrl}')" 
+                     onerror="this.parentElement.style.display='none'">
+            </div>`;
     });
 
-    // 4. จัดการลิงก์ (ฉบับสมบูรณ์)
-    const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
+    // 4. จัดการลิงก์ (ฉบับไม่ซ้อนทับกับรูปภาพ)
+    const urlRegex = /(?<!src=")(https?:\/\/[^\s<"']+(?<!\.(?:png|jpg|jpeg|gif|webp)))/gi;
     text = text.replace(urlRegex, (url) => {
-        const cleanUrl = url.trim();
-        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return cleanUrl; // ปล่อยให้ img tag จัดการ
-        
+        const cleanUrl = url.trim().replace(/[\]\)\>]/g, '');
         return `
-        <div class="my-2">
-            <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                </div>
-                <div class="flex flex-col overflow-hidden text-left">
-                    <span class="text-[10px] text-gray-400 uppercase font-bold">Link</span>
-                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
-                </div>
-            </a>
-        </div>`;
+            <div class="my-2">
+                <a href="${cleanUrl}" class="link-card hover:bg-blue-50 transition-all group" target="_blank">
+                    <div class="bg-blue-600 p-2 rounded-lg text-white group-hover:rotate-12 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    </div>
+                    <div class="flex flex-col overflow-hidden text-left">
+                        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">เข้าสู่เว็บไซต์</span>
+                        <span class="text-blue-600 font-medium truncate text-xs w-48">${cleanUrl}</span>
+                    </div>
+                </a>
+            </div>`;
     });
 
     element.innerHTML = text;
 }
+
 
 
 
