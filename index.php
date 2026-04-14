@@ -73,7 +73,7 @@ input, textarea {
         #modal-img { transition: transform 0.3s ease; }
         .ai-content img { cursor: zoom-in; transition: opacity 0.2s; }
         .ai-content img:hover { opacity: 0.9; }
-
+</style>
 
 </head>
 <body class="h-[100dvh] flex items-center justify-center p-0 sm:p-4 md:p-8 relative">
