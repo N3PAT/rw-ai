@@ -298,15 +298,17 @@ for ($i = 0; $i < 2; $i++) {
 
 // --- 6. OUTPUT & ERROR HANDLING ---
 
+// --- 6. OUTPUT & ERROR HANDLING ---
+
 if ($success) {
-    // แนะนำ: ถ้ายังไม่ได้เขียนส่วน INSERT ลงฐานข้อมูลจริงๆ 
-    // ให้ส่ง timestamp หรือ ID สมมติไปก่อนเพื่อให้ JS ไม่ Error ครับ
+    // แนะนำ: สร้าง ID สมมติขึ้นมา (หรือใช้ ID จากการ Insert DB จริง) 
+    // เพื่อให้ตัวแปร log_id ในหน้าบ้านไม่เป็นค่าว่าง
     $logId = (string)time(); 
 
     send_json([
         "status" => "success",
         "response" => trim($aiResponse),
-        "log_id" => $logId // เพิ่มบรรทัดนี้ครับ
+        "log_id" => $logId  // เพิ่มบรรทัดนี้เพื่อให้สอดคล้องกับหน้าบ้าน
     ]);
 } else {
     $userFriendlyError = "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้องชั่วคราว (Code: $finalHttpCode)";
@@ -320,6 +322,7 @@ if ($success) {
     send_json([
         "status" => "error",
         "response" => $userFriendlyError,
-        "log_id" => null // เพิ่มบรรทัดนี้ครับ
+        "log_id" => null // ส่ง null กลับไปในกรณีที่ Error
     ]);
 }
+
