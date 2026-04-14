@@ -104,39 +104,41 @@
         /* Toast styles for dark mode */
         body.dark-mode .toast { background-color: #1e293b; border: 1px solid #334155; color: #fff; }
 
-        /* === [ TOAST UI DESIGN ] === */
+/* === [ BADGE NOTIFICATION STYLE ] === */
 #toast-container {
     position: fixed;
-    top: 20px;
+    top: 24px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 9999;
+    z-index: 10000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    width: 90%;
-    max-width: 400px;
+    align-items: center;
+    gap: 12px;
+    width: auto;
+    min-width: 280px;
+    max-width: 90vw;
     pointer-events: none;
 }
 
 .toast {
     pointer-events: auto;
     display: flex;
-    items-center: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #1e293b;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 18px;
+    border-radius: 9999px; /* ทรง Badge มนหลอด */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #334155;
     font-size: 14px;
     font-weight: 500;
     opacity: 0;
     transform: translateY(-20px) scale(0.9);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .toast.show {
@@ -144,19 +146,30 @@
     transform: translateY(0) scale(1);
 }
 
-/* Toast Types */
-.toast-offline { border-left: 4px solid #ef4444; }
-.toast-online { border-left: 4px solid #10b981; }
-.toast-info { border-left: 4px solid #3b82f6; }
+/* Badge Color Indicators */
+.toast-offline { border-bottom: 2px solid #ef4444; }
+.toast-online { border-bottom: 2px solid #10b981; }
+.toast-info { border-bottom: 2px solid #3b82f6; }
 
 .toast-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
 }
+
+/* Dark Mode สำหรับ Badge */
+body.dark-mode .toast {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.toast-offline svg { color: #f87171; }
+.toast-online svg { color: #34d399; }
+.toast-info svg { color: #60a5fa; }
 
 /* Dark Mode Support for Toast */
 body.dark-mode .toast {
@@ -164,10 +177,6 @@ body.dark-mode .toast {
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #f1f5f9;
 }
-
-.toast-offline svg { color: #ef4444; }
-.toast-online svg { color: #10b981; }
-.toast-info svg { color: #3b82f6; }
 
     </style>
 </head>
@@ -556,11 +565,9 @@ function useSuggestion(text) {
         });
     }
 
-        // === [ B: TOAST NOTIFICATION LOGIC ] ===
+    // === [ B: BADGE NOTIFICATION LOGIC ] ===
     function showToast(message, type = 'info', duration = 4000) {
         let container = document.getElementById('toast-container');
-        
-        // ถ้ายังไม่มี container ให้สร้างใหม่
         if (!container) {
             container = document.createElement('div');
             container.id = 'toast-container';
@@ -570,40 +577,30 @@ function useSuggestion(text) {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type} no-select`;
 
+        // เลือก Icon ที่ดูเป็นทางการและเรียบง่าย
         const icons = {
-            offline: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path><path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>`,
-            online: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
-            info: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
+            offline: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+            online: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+            info: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`
         };
 
-        const selectedIcon = icons[type] || icons.info;
         toast.innerHTML = `
-            <div class="toast-icon">${selectedIcon}</div>
+            <div class="toast-icon">${icons[type] || icons.info}</div>
             <div class="toast-message">${message}</div>
         `;
         
         container.appendChild(toast);
 
-        // Animation ขาเข้า
-        setTimeout(() => toast.classList.add('show'), 50);
+        // แสดง Badge ด้วย Animation
+        setTimeout(() => toast.classList.add('show'), 10);
 
-        // Animation ขาออกและลบ Element
+        // ซ่อนและลบออกเมื่อครบเวลา
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
+            setTimeout(() => toast.remove(), 500);
         }, duration);
     }
 
-    // ตรวจจับสถานะเน็ต (ตัวอย่างการใช้งาน)
-    window.addEventListener('offline', () => {
-        showToast('ขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจตอบช้าลงนะครับ', 'offline', 5000);
-    });
-
-    window.addEventListener('online', () => {
-        showToast('กลับมาเชื่อมต่อแล้ว! ถามพี่ RW-AI ต่อได้เลยครับ', 'online', 3000);
-    });
-
-    }
 </script>
 
 </body>
