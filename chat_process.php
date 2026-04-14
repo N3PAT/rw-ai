@@ -295,6 +295,8 @@ if ($success && !empty($aiResponse)) {
         "response" => trim($aiResponse),
         "log_id" => $lastId
     ]);
-} else {
-    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้องชั่วคราว ลองถามใหม่อีกครั้งนะครับ (Error Code: $httpCode)"]);
+} // แก้บรรทัดสุดท้ายก่อนส่ง JSON
+else {
+    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบขัดข้อง (Code: $httpCode) " . ($curlError ?: "")]);
 }
+
