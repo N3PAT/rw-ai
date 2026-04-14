@@ -312,5 +312,5 @@ if ($success && !empty($aiResponse)) {
         "log_id" => $lastId
     ]);
 } else {
-    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้องชั่วคราว ลองถามใหม่อีกครั้งนะครับ (Error Code: $httpCode)"]);
+    send_json(["response" => "พี่ RW-AI ขออภัยครับ ระบบประมวลผลขัดข้อง (HTTP: $httpCode) ลองใหม่อีกครั้งนะครับ"]);
 }
