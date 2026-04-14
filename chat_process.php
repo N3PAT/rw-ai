@@ -254,13 +254,15 @@ $httpCode = 0;
 foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
     $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$cleanModel}:generateContent?key=" . $apiKey;
 
-    $ch = curl_init($apiUrl);
+        $ch = curl_init($apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30); 
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); 
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ข้ามการตรวจใบรับรอง
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);     // เพิ่มบรรทัดนี้เพื่อแก้ Code 0 ในบาง Server
+
 
     $rawResponse = curl_exec($ch);
     $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
