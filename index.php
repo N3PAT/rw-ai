@@ -337,10 +337,12 @@
 
     // 2. จัดการรูปภาพ [SHOW_MAP] และ [SHOW_IMG] ก่อนเป็นอันดับแรก
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
-    if (text.includes('[SHOW_MAP]')) {
-        const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
-        text = text.replace('[SHOW_MAP]', imgHtml);
-    }
+    const mapRegex = /\[\s?SHOW_MAP\s?\]/gi;
+if (mapRegex.test(text)) {
+    const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
+    text = text.replace(mapRegex, imgHtml);
+}
+
 
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
