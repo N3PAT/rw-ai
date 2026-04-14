@@ -272,6 +272,40 @@ function autoResizeTextarea() {
         inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
     }
 }
+    function appendMessage(text, isUser, logId = null) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate`;
+    
+    // สร้าง HTML สำหรับข้อความ
+    let messageHtml = `
+        ${!isUser ? `
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-1 border border-blue-200 overflow-hidden">
+                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
+            </div>` : ''}
+        <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'} p-3.5 px-4 rounded-2xl shadow-sm max-w-[85%] text-sm md:text-base relative ai-content">
+            <div class="msg-text">${isUser ? text : marked.parse(text)}</div>
+            ${!isUser && logId ? `
+                <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
+                    <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
+                    <div class="flex gap-2">
+                        <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1 hover:bg-blue-50 rounded text-blue-400">👍</button>
+                        <button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1 hover:bg-red-50 rounded text-red-400">👎</button>
+                    </div>
+                </div>` : ''}
+        </div>
+    `;
+    
+    msgDiv.innerHTML = messageHtml;
+    container.appendChild(msgDiv);
+    
+    // ถ้าเป็น AI ตอบ ให้จัดการพวกรูปภาพและลิงก์ด้วย
+    if (!isUser) {
+        processVisuals(msgDiv.querySelector('.ai-content'));
+    }
+    
+    scrollToBottom();
+}
+
         // --- ปรับปรุงส่วนการส่งข้อความให้เสถียรขึ้น ---
 async function sendMessage() {
     const message = inputField.value.trim();
