@@ -57,7 +57,7 @@ function getUserIP() {
 
 // 🛡️ ระบบจัดการคิว (Request Throttling)
 function checkRateLimit() {
-    $limit = 3; 
+    $limit = 10; 
     $window = 60; 
     $now = time();
 
