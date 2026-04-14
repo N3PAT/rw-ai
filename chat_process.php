@@ -16,27 +16,24 @@ if (file_exists(__DIR__ . '/.env') && is_readable(__DIR__ . '/.env')) {
     }
 }
 
-// --- 1. SETTINGS & ERROR HANDLING ---
-ini_set('display_errors', '0');
-error_reporting(E_ALL);
-header('Content-Type: application/json; charset=utf-8');
-
+// --- 1. SETTINGS ---
 $config = [
     "db" => [
         "host" => getenv('DB_HOST'),
         "user" => getenv('DB_USER'),
         "pass" => getenv('DB_PASS'),
         "name" => getenv('DB_NAME'),
-        "port" => (int)getenv('DB_PORT') 
+        "port" => (int)(getenv('DB_PORT') ?: 3306) 
     ],
-"gemini" => [
+    "gemini" => [
         "api_key" => getenv('GEMINI_API_KEY'),
         "models" => [
-    'gemini-1.5-flash' 
-]
-
+            // ดึงชื่อโมเดลจาก Env ที่เราตั้งใน Render
+            getenv('GEMINI_MODEL_PRIMARY') ?: 'gemini-1.5-flash'
+        ]
     ]
 ];
+
 function send_json(array $data): void {
     global $conn;
     if (isset($conn) && $conn instanceof mysqli) {
@@ -144,7 +141,7 @@ foreach ($config['gemini']['models'] as $index => $currentModel) {
     $currentModel = trim($currentModel);
     $cleanModelName = str_replace('models/', '', $currentModel);
     
-    $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$cleanModelName}:generateContent?key=" . urlencode((string)$config['gemini']['api_key']);
+    $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$cleanModelName}:generateContent?key="...
 
     $ch = curl_init($apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
