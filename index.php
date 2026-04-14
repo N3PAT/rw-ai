@@ -40,12 +40,7 @@
     background-color: #f1f5f9;
     font-weight: 600;
 }
-        .msg-text {
-    white-space: pre-wrap;
-    word-break: break-word; /* เปลี่ยนจาก normal เป็น break-word */
-    overflow-wrap: break-word;
-    display: block; /* เปลี่ยนจาก inline-block เป็น block */
-}
+       
 
 
         .feedback-btn {
@@ -250,45 +245,50 @@
     }
 
     function appendMessage(text, isUser, logId = null) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate`;
-        
-        let messageHtml = `
-            ${!isUser ? `
-                <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-1 border border-blue-200 overflow-hidden">
-                    <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} msg-animate`;
+    
+    let messageHtml = `
+        ${!isUser ? `
+            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-1 border border-blue-200 overflow-hidden">
+                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
+            </div>` : ''}
+        <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'} p-3.5 px-4 rounded-2xl shadow-sm max-w-[85%] text-sm md:text-base relative ai-content">
+            <div class="msg-text">${isUser ? text : marked.parse(text)}</div>
+            ${!isUser && logId ? `
+                <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
+                    <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
+                    <div class="flex gap-2">
+                        <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-colors" title="มีประโยชน์">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                            </svg>
+                        </button>
+                        <button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="ไม่มีประโยชน์">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>` : ''}
-            <div class="${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'} p-3.5 px-4 rounded-2xl shadow-sm max-w-[85%] text-sm md:text-base relative ai-content">
-                <div class="msg-text">${isUser ? text : marked.parse(text)}</div>
-                ${!isUser && logId ? `
-                    <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between gap-4">
-                        <span class="text-[9px] text-gray-400 uppercase tracking-widest">คำตอบนี้มีประโยชน์ไหม?</span>
-                        <div class="flex gap-2">
-                            <button onclick="sendFeedback('${logId}', 1, this)" class="feedback-btn p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-colors" title="มีประโยชน์">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-    </svg>
-</button>
-<button onclick="sendFeedback('${logId}', 0, this)" class="feedback-btn p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="ไม่มีประโยชน์">
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
-    </svg>
-</button>
-
-                        </div>
-                    </div>` : ''}
-            </div>
-        `;
-        
-        msgDiv.innerHTML = messageHtml;
-        container.appendChild(msgDiv);
-        
-        if (!isUser) {
-            processVisuals(msgDiv.querySelector('.ai-content'));
-        }
-        
-        scrollToBottom();
+        </div>
+    `;
+    
+    msgDiv.innerHTML = messageHtml;
+    container.appendChild(msgDiv);
+    
+    // ปรับปรุง: รอให้ Browser วาดข้อความเสร็จก่อนค่อยดักจับ Link Card หรือรูปภาพ
+    if (!isUser) {
+        setTimeout(() => {
+            const contentEl = msgDiv.querySelector('.ai-content');
+            if (contentEl) {
+                processVisuals(contentEl);
+            }
+        }, 50);
     }
+    
+    scrollToBottom();
+}
 
     async function sendMessage() {
         const message = inputField.value.trim();
@@ -339,47 +339,47 @@
     }
 
     function processVisuals(element) {
-    // 1. กวาดล้างเศษโค้ดที่ AI ชอบแถมมา
+    // 1. กวาดล้างเศษโค้ดที่ AI อาจจะแถมมาเกิน
     let text = element.innerHTML.replace(/'\)">|"\)>|\)">/g, '');
 
-    // 2. จัดการรูปภาพ [SHOW_MAP] และ [SHOW_IMG] ก่อนเป็นอันดับแรก
+    // 2. จัดการ [SHOW_MAP]
     const mapUrl = "https://www.rittiya.ac.th/wp-content/uploads/2023/12/Screenshot-2023-12-21-155022-768x344.png";
     const mapRegex = /\[\s?SHOW_MAP\s?\]/gi;
-if (mapRegex.test(text)) {
-    const imgHtml = `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`;
-    text = text.replace(mapRegex, imgHtml);
-}
+    text = text.replace(mapRegex, `<div class="my-3"><img src="${mapUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${mapUrl}')"></div>`);
 
-
+    // 3. จัดการ [SHOW_IMG:URL]
     const customImgRegex = /\[SHOW_IMG:(.*?)\]/gi;
     text = text.replace(customImgRegex, (match, url) => {
         const cleanUrl = url.replace(/<[^>]*>?/gm, '').replace(/\s+/g, '').trim();
         return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
     });
 
-    // 3. จัดการลิงก์ (เพิ่มตัวดักจับเพื่อไม่ให้ไปยุ่งกับไอคอน SVG)
+    // 4. จัดการลิงก์ทั่วไป และแยกประเภทไฟล์รูปภาพอัตโนมัติ
     const urlRegex = /(?<!href="|src="|">)(https?:\/\/[^\s<"']+)/gi;
     text = text.replace(urlRegex, (url) => {
         const cleanUrl = url.trim();
 
-        // 🚫 ถ้าเป็นลิงก์ของ W3 (พวก SVG) หรือไฟล์รูปภาพ ไม่ต้องทำ Link Card
-        if (cleanUrl.includes('w3.org') || cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i)) {
-            return cleanUrl; 
+        // ข้ามลิงก์ของระบบ (เช่น SVG ของ W3)
+        if (cleanUrl.includes('w3.org')) return cleanUrl;
+
+        // ถ้าเป็นลิงก์รูปภาพ (jpg, png, webp, etc.) ให้แสดงเป็นรูปเลย
+        if (cleanUrl.match(/\.(jpeg|jpg|gif|png|webp|svg)$/i)) {
+            return `<div class="my-3"><img src="${cleanUrl}" class="max-w-full rounded-xl shadow-lg cursor-zoom-in border-2 border-white ring-1 ring-gray-200" onclick="openImageModal('${cleanUrl}')"></div>`;
         }
         
+        // ถ้าเป็นลิงก์ทั่วไป ให้ทำเป็น Link Card ที่ต้องกดยืนยันก่อนเปิด
         return `
-<div class="my-2">
-    <div onclick="showLinkConfirm('${cleanUrl}')" class="link-card cursor-pointer hover:bg-blue-50 transition-all group">
-        <div class="bg-blue-600 p-2 rounded-lg text-white shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-        </div>
-        <div class="flex flex-col overflow-hidden text-left">
-            <span class="text-[10px] text-gray-400 uppercase font-bold">เปิดลิงก์ภายนอก</span>
-            <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
-        </div>
-    </div>
-</div>`;
-
+        <div class="my-2">
+            <div onclick="showLinkConfirm('${cleanUrl}')" class="link-card cursor-pointer hover:bg-blue-50 transition-all group">
+                <div class="bg-blue-600 p-2 rounded-lg text-white shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                </div>
+                <div class="flex flex-col overflow-hidden text-left">
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">เปิดลิงก์ภายนอก</span>
+                    <span class="text-blue-600 font-medium truncate text-xs">${cleanUrl}</span>
+                </div>
+            </div>
+        </div>`;
     });
 
     element.innerHTML = text;
