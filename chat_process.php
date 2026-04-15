@@ -244,6 +244,13 @@ $jsonPayload = json_encode([
             "parts" => [["text" => $prompt]]
         ]
     ], 
+                             "safetySettings" => [
+        ["category" => "HARM_CATEGORY_HARASSMENT", "threshold" => "BLOCK_NONE"],
+        ["category" => "HARM_CATEGORY_HATE_SPEECH", "threshold" => "BLOCK_NONE"],
+        ["category" => "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold" => "BLOCK_NONE"],
+        ["category" => "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold" => "BLOCK_NONE"]
+    ]
+], JSON_UNESCAPED_UNICODE);
     "generationConfig" => [
         "temperature" => 0.2, // ปรับเพิ่มนิดนึงเพื่อให้พี่รุ่นพี่ RW-AI ดูมีชีวิตชีวาขึ้น
         "topP" => 0.95,
@@ -259,6 +266,9 @@ $success = false;
 $aiResponse = "";
 $httpCode = 0;
 $lastErrorMsg = "";
+if (empty($config['gemini']['api_keys'])) {
+    send_json(["response" => "พี่ RW-AI หา API Key ไม่เจอครับ ตรวจสอบไฟล์ .env หรือ Environment Variable หน่อยนะ!"]);
+}
 
 // 🔥 วนลูปสลับทั้ง Key และ Model
 foreach ($config['gemini']['api_keys'] as $apiKey) {
@@ -339,5 +349,9 @@ if ($success && !empty($aiResponse)) {
         "log_id" => $lastId ?? 0
     ]);
 } else {
-    // ส่วน Error Handling เดิม...
+    // ถ้าอยากรู้สาเหตุจริงๆ ให้เปิดบรรทัดล่างนี้ตอนทดสอบครับ
+    // $friendlyMsg = "ระบบขัดข้อง: " . $lastErrorMsg; 
+    
+    $friendlyMsg = "พี่ RW-AI ขออภัยครับ ระบบเชื่อมต่อล้มเหลว หรือ น้องถามเร็วไป ลองใหม่อีกครั้งนะ ครับผม!";
+    send_json(["response" => $friendlyMsg]);
 }
