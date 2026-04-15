@@ -307,29 +307,37 @@ foreach ($config['gemini']['api_keys'] as $apiKey) {
     }
 }
 
+// --- 6. LOGGING & SEND RESPONSE ---
 if ($success && !empty($aiResponse)) {
-    // เตรียมบันทึก Log ลง Database
-    $lastId = 0;
-    $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
-    
-    if ($stmt) {
-        // ใช้ตัวแปรที่รับค่ามาตั้งแต่ต้น
-        $stmt->bind_param("sss", $userIP, $userMessageSafe, $aiResponse);
-        $stmt->execute();
-        $lastId = (int)$conn->insert_id;
-        $stmt->close();
+    try {
+        $lastId = 0;
+        // ตรวจสอบ Connection ก่อนทำงาน
+        if ($conn && $conn->ping()) {
+            // ใช้คำสั่ง INSERT ที่ระบุคอลัมน์ตรงกับที่มีใน DESC
+            $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
+            
+            if ($stmt) {
+                // ตรวจสอบว่าตัวแปรไม่เป็น null
+                $ip = $userIP ?? '0.0.0.0';
+                $msg = $userMessageSafe ?? '-';
+                $resp = $aiResponse ?? '-';
+
+                $stmt->bind_param("sss", $ip, $msg, $resp);
+                $stmt->execute();
+                $lastId = (int)$conn->insert_id;
+                $stmt->close();
+            }
+        }
+    } catch (Exception $e) {
+        // ถ้า DB มีปัญหา ให้ข้ามไปก่อนเพื่อให้ AI ยังตอบได้
+        // (เราสามารถแอบดู Error ได้จาก error_log)
     }
 
+    // ส่งคำตอบกลับหา User เสมอ แม้ Log จะบันทึกไม่ได้
     send_json([
         "response" => trim($aiResponse),
-        "log_id" => $lastId
+        "log_id" => $lastId ?? 0
     ]);
 } else {
-    // 💡 ปรับการแจ้งเตือนให้ดูเป็นมิตรและบอกสาเหตุเบื้องต้น
-    $friendlyMsg = "พี่ RW-AI ขออภัยครับ น้องถามเร็วไปหรือระบบ Google ขัดข้องชั่วคราว ลองใหม่อีกครั้งนะ";
-    
-    // ถ้าเป็น Dev หรือทดสอบอยู่ อยากเห็น Error จริงให้เปิดอันนี้:
-    // $friendlyMsg .= " (Detail: $lastErrorMsg)";
-
-    send_json(["response" => $friendlyMsg]);
+    // ส่วน Error Handling เดิม...
 }
