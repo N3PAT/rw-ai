@@ -307,14 +307,22 @@ foreach ($config['gemini']['api_keys'] as $apiKey) {
     }
 }
 
-// --- 6. LOGGING & SEND RESPONSE ---
 if ($success && !empty($aiResponse)) {
-    // [Optimized] รันระบบล้าง Log และบันทึกข้อมูล
-    // ... (ส่วนการ INSERT chat_logs ของน้องทำมาดีแล้ว ใช้ต่อได้เลยครับ) ...
+    // เตรียมบันทึก Log ลง Database
+    $lastId = 0;
+    $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
+    
+    if ($stmt) {
+        // ใช้ตัวแปรที่รับค่ามาตั้งแต่ต้น
+        $stmt->bind_param("sss", $userIP, $userMessageSafe, $aiResponse);
+        $stmt->execute();
+        $lastId = (int)$conn->insert_id;
+        $stmt->close();
+    }
 
     send_json([
         "response" => trim($aiResponse),
-        "log_id" => $lastId ?? 0
+        "log_id" => $lastId
     ]);
 } else {
     // 💡 ปรับการแจ้งเตือนให้ดูเป็นมิตรและบอกสาเหตุเบื้องต้น
