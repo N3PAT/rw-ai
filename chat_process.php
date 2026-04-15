@@ -259,79 +259,50 @@ $payload = [
 ];
 
 
+// 1. กำหนดลำดับโมเดลที่ต้องการใช้ (ตัวไหนพัง ให้ไปตัวถัดไป)
+$modelFallback = ["gemma-3-12b-it", "gemini-1.5-flash-8b", "gemini-1.5-flash"];
+
 $success = false;
 $aiResponse = "";
 $httpCode = 0;
 
-// 🔥 วนลูปผ่านทั้ง 5 Keys (ที่ถูกสุ่มลำดับแล้ว)
-foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
-    // ใช้การต่อสตริงแบบธรรมดาเพื่อความชัวร์ ลดโอกาสที่ปีกกา {} จะทำพิษ
-$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . $cleanModel . ":generateContent?key=" . $apiKey;
+// 🔥 วนลูปสลับทั้ง Key และ Model เพื่อหนี 503
+foreach ($config['api_keys'] as $apiKey) {
+    foreach ($modelFallback as $currentModel) {
+        $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . $currentModel . ":generateContent?key=" . $apiKey;
 
         $ch = curl_init($apiUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30); 
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // ข้ามการตรวจใบรับรอง
-    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);     // เพิ่มบรรทัดนี้เพื่อแก้ Code 0 ในบาง Server
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 15, // ลด Timeout ลงเพื่อให้สลับตัวสำรองได้ไวขึ้น
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4
+        ]);
 
+        $rawResponse = curl_exec($ch);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
-    $rawResponse = curl_exec($ch);
-    $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-
-    if ($httpCode === 200 && $rawResponse) {
-        $resData = json_decode($rawResponse, true);
-        if (isset($resData['candidates'][0]['content']['parts'][0]['text'])) {
-            $aiResponse = $resData['candidates'][0]['content']['parts'][0]['text'];
-            $success = true;
-            break; // ✅ สำเร็จ! ออกจากลูปทันที
+        if ($httpCode === 200 && $rawResponse) {
+            $resData = json_decode($rawResponse, true);
+            if (isset($resData['candidates'][0]['content']['parts'][0]['text'])) {
+                $aiResponse = $resData['candidates'][0]['content']['parts'][0]['text'];
+                $success = true;
+                break 2; // ✅ สำเร็จ! ออกจากทั้ง 2 ลูปทันที
+            }
         }
+
+        // ถ้าเจอ 503 หรือ 429 ในโมเดลนี้ ให้ข้ามไปลองโมเดลถัดไปในลิสต์ fallback
+        if ($httpCode === 503 || $httpCode === 429) {
+            continue; 
+        }
+        
+        // ถ้าเป็น Error อื่นๆ (เช่น 400) ให้ข้าม Key ไปเลย
+        break;
     }
-
-                // ถ้าติด Quota (429), Server เอ๋อ (5xx) หรือเชื่อมต่อไม่ได้ (Code 0) ให้ลอง Key ถัดไป
-    if ($httpCode === 429 || ($httpCode >= 500 && $httpCode <= 599) || $httpCode === 0) {
-        continue; 
-    } 
-
-    
-    // ถ้าสำเร็จ หรือเจอ Error อื่นๆ (400, 403) ให้หยุดการวนลูป
-    break; 
-} // <--- ต้องมีปีกกาปิดตัวนี้เพื่อจบการวนลูปสลับ Key
-
-// --- 6. LOGGING & CLEANUP ---
-
-
-
-
-// --- 6. LOGGING & CLEANUP ---
-if ($success && !empty($aiResponse)) {
-    // 🔥 OPTIMIZE 3: ลบข้อมูลเก่า
-    if (rand(1, 20) === 1) {
-        $conn->query("DELETE FROM chat_logs WHERE created_at < NOW() - INTERVAL 20 DAY");
-    }
-
-    $lastId = 0;
-    $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
-    if ($stmt) {
-        $stmt->bind_param("sss", $userIP, $userMessageSafe, $aiResponse);
-        $stmt->execute();
-        $lastId = $stmt->insert_id; // เก็บ ID ไว้ส่งกลับไปทำ Feedback
-        $stmt->close();
-    }
-
-    // [UPDATE] ส่ง log_id กลับไปด้วยเพื่อให้ Frontend ใช้ทำระบบ Like/Dislike
-    send_json([
-        "response" => trim($aiResponse),
-        "log_id" => $lastId
-    ]);
-} else {
-    // ดึงคำด่าที่แท้จริงจาก Google มาดู (นี่คือหัวใจของการแก้ Error 400)
-    $errorDetail = json_decode($rawResponse, true);
-    $errorMessage = $errorDetail['error']['message'] ?? 'ไม่ทราบสาเหตุแน่ชัด';
-    send_json(["response" => "พี่ RW-AI แจ้งเตือน (Code: $httpCode): $errorMessage"]);
 }
 
