@@ -274,7 +274,7 @@ foreach ($config['gemini']['api_keys'] as $apiKey) {
                 'Content-Type: application/json',
                 'Content-Length: ' . strlen($jsonPayload)
             ],
-            CURLOPT_TIMEOUT => 12,           // รอผลลัพธ์ไม่เกิน 12 วิ
+            CURLOPT_TIMEOUT => 30,           // รอผลลัพธ์ไม่เกิน 12 วิ
             CURLOPT_CONNECTTIMEOUT => 5,      // ถ้าต่อติดยากเกิน 5 วิ ให้ข้ามเลย
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => 0,
