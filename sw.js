@@ -6,9 +6,7 @@ const CACHE_NAME = `rw-ai-v${VERSION}`;
 const assets = [
   '/',
   'index.php',
-  'manifest.json',
-  'style.css', // ใส่ชื่อไฟล์ CSS จริงๆ ของน้อง
-  'app.js'     // ใส่ชื่อไฟล์ JS จริงๆ ของน้อง
+  'manifest.json'
 ];
 
 // 1. ติดตั้ง Service Worker
