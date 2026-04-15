@@ -27,17 +27,38 @@ $config = [
         "user" => getenv('DB_USER'),
         "pass" => getenv('DB_PASS'),
         "name" => getenv('DB_NAME'),
-        "port" => (int)(getenv('DB_PORT') ?: 14495)
+        // ถ้าไม่มีใน env ให้ใช้ค่าว่าง หรือดึงจาก env ทั้งหมด
+        "port" => (int)getenv('DB_PORT') 
     ],
     "gemini" => [
-        // เปลี่ยนเป็น api_keys (Array) และใช้ gemma-3-12b-it เป็นค่าเริ่มต้น
+        // ดึง API Keys ทั้งหมดจาก env
         "api_keys" => array_filter(array_map('trim', explode(',', (string)getenv('GEMINI_API_KEY')))),
-        "model"    => trim((string)getenv('GEMINI_MODEL')) ?: 'gemini-3.1-flash-lite-preview'
+        // ดึงชื่อรุ่นจาก env ถ้าไม่มีจริงๆ ค่อยวาง fallback ไว้ในตัวแปรสั้นๆ
+        "model"    => trim((string)getenv('GEMINI_MODEL'))
     ]
 ];
-if (!empty($config['gemini']['api_keys'])) {
-    shuffle($config['gemini']['api_keys']);
+
+// เช็คความเรียบร้อยของ Config
+if (empty($config['gemini']['api_keys'])) {
+    send_json(["response" => "พี่ RW-AI หา API Key ไม่เจอในระบบครับน้อง!"]);
 }
+
+if (empty($config['gemini']['model'])) {
+    send_json(["response" => "พี่ RW-AI ไม่รู้ว่าจะใช้ร่างไหนตอบดี (ลืมตั้ง GEMINI_MODEL ใน .env ครับ)"]);
+}
+
+// ดึง API Keys และกรองค่าว่างออก
+$config['gemini']['api_keys'] = array_filter(array_map('trim', explode(',', (string)getenv('GEMINI_API_KEY'))));
+
+// 1. ตรวจสอบก่อนว่ามี Key หรือไม่
+if (!empty($config['gemini']['api_keys'])) {
+    // 2. สุ่มลำดับ Key เพื่อกระจาย Load (เรียกแค่รอบเดียวพอครับ)
+    shuffle($config['gemini']['api_keys']);
+} else {
+    // 3. ถ้าไม่มี Key เลย ให้แจ้งเตือนระบบ (ดีกว่าปล่อยให้ Script รันต่อแล้วพังในลูป)
+    send_json(["response" => "พี่ RW-AI หา API Key ไม่เจอครับ ตรวจสอบไฟล์ .env หน่อยนะ!"]);
+}
+
 
 function send_json(array $data): void {
     global $conn;
