@@ -614,13 +614,29 @@ function useSuggestion(text) {
         showToast('ขณะนี้คุณกำลังใช้งานแบบออฟไลน์', 'offline', 5000);
     }
     // === [ D: SERVICE WORKER REGISTRATION ] ===
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('RW-AI PWA Ready!'))
-                .catch(err => console.log('PWA Error:', err));
-        });
-    }
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // ใช้ PHP พ่น Timestamp ของไฟล์ sw.js เพื่อบังคับให้เบราว์เซอร์เห็นว่าเป็นไฟล์ใหม่เสมอเมื่อมีการแก้ไข
+        const swUrl = 'sw.js?v=<?php echo filemtime('sw.js'); ?>';
+        
+        navigator.serviceWorker.register(swUrl)
+            .then(reg => {
+                console.log('RW-AI PWA Ready! (Version: <?php echo filemtime('sw.js'); ?>)');
+                
+                // ตรวจสอบว่ามีการอัปเดตใหม่หรือไม่
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // ถ้าเจอเวอร์ชันใหม่ ให้ทำการ Refresh หน้าจอเพื่อเริ่มใช้ทันที
+                            window.location.reload();
+                        }
+                    };
+                };
+            })
+            .catch(err => console.log('PWA Error:', err));
+    });
+}
 
 </script>
 
