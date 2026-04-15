@@ -59,27 +59,27 @@ function getUserIP() {
     }
 }
 
-// 🛡️ [UPDATE] ระบบจัดการคิว (Request Throttling)
 function checkRateLimit() {
-    $limit = 15; // ถามได้ 3 ครั้ง
-    $window = 60; // ใน 60 วินาที
+    $limit = 20; // เพิ่มโควตาเป็น 20 ครั้งต่อนาที
+    $window = 60; 
     $now = time();
 
     if (!isset($_SESSION['request_ts'])) {
         $_SESSION['request_ts'] = [];
     }
 
-    // กรองเอาเฉพาะ timestamp ที่อยู่ในช่วง 1 นาทีล่าสุด
     $_SESSION['request_ts'] = array_filter($_SESSION['request_ts'], function($ts) use ($now, $window) {
         return $ts > ($now - $window);
     });
 
     if (count($_SESSION['request_ts']) >= $limit) {
-        send_json(["response" => "น้องใจเย็นๆ นะครับ พี่ขอเวลาพักจิบน้ำ 30 วินาที แล้วค่อยถามใหม่นะ"]);
+        // แจ้งเตือนแบบน่ารักๆ สไตล์รุ่นพี่
+        send_json(["response" => "ใจเย็นๆ นะครับน้อง พี่ตอบไม่ทันแล้ว! ขอเวลาจิบน้ำ 20 วินาที แล้วลองถามใหม่นะ ครับผม!"]);
     }
 
     $_SESSION['request_ts'][] = $now;
 }
+
 
 
 // 🔥 OPTIMIZE 1: รับและเช็คข้อความ
