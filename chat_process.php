@@ -305,4 +305,31 @@ foreach ($config['api_keys'] as $apiKey) {
         break;
     }
 }
+// --- 6. LOGGING & CLEANUP ---
+if ($success && !empty($aiResponse)) {
+    // 🔥 OPTIMIZE 3: ล้าง Log เก่า (สุ่มรัน 1 ใน 20 ครั้ง)
+    if (rand(1, 20) === 1) {
+        $conn->query("DELETE FROM chat_logs WHERE created_at < NOW() - INTERVAL 20 DAY");
+    }
+
+    $lastId = 0;
+    $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("sss", $userIP, $userMessageSafe, $aiResponse);
+        $stmt->execute();
+        $lastId = $stmt->insert_id;
+        $stmt->close();
+    }
+
+    send_json([
+        "response" => trim($aiResponse),
+        "log_id" => $lastId
+    ]);
+} else {
+    // กรณีที่วนจนครบทุก Key และทุก Model แล้วยังไม่ได้คำตอบ
+    $errorDetail = json_decode($rawResponse ?? '', true);
+    $errorMessage = $errorDetail['error']['message'] ?? 'ขณะนี้มีผู้ใช้งานจำนวนมาก พี่ตอบไม่ทันจริงๆ ครับ ลองใหม่อีกครั้งนะ';
+    send_json(["response" => "พี่ RW-AI ขออภัยครับ (Code: $httpCode): $errorMessage"]);
+}
+
 
