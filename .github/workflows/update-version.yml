@@ -1,0 +1,30 @@
+name: Auto Update Version
+
+on:
+  push:
+    branches:
+      - main  # หรือชื่อ branch ที่น้องใช้
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update Version in sw.js and index.php
+        run: |
+          # ใช้เลข Run Number ของ GitHub มาเป็นเลขเวอร์ชัน (เช่น v1.0.80)
+          VERSION="1.0.${{ github.run_number }}-G31L"
+          
+          # ใช้คำสั่ง sed เข้าไปแก้เลขในไฟล์ sw.js และ index.php
+          sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*-G31L/v$VERSION/g" sw.js
+          sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*-G31L/v$VERSION/g" index.php
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .
+          git commit -m "chore: auto-update version to ${{ github.run_number }}"
+          git push
