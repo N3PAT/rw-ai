@@ -331,38 +331,36 @@ foreach ($config['gemini']['api_keys'] as $apiKey) {
 // --- 6. LOGGING & SEND RESPONSE ---
 if ($success && !empty($aiResponse)) {
     try {
-        $lastId = 0;
-        // ตรวจสอบ Connection ก่อนทำงาน
         if ($conn && $conn->ping()) {
-            // ใช้คำสั่ง INSERT ที่ระบุคอลัมน์ตรงกับที่มีใน DESC
-            $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
-            
+            // บันทึกลง chat_logs (ตามโครงสร้างที่มี 7 columns)
+            $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response, thinking_process) VALUES (?, ?, ?, ?)");
             if ($stmt) {
-                // ตรวจสอบว่าตัวแปรไม่เป็น null
-                $ip = $userIP ?? '0.0.0.0';
-                $msg = $userMessageSafe ?? '-';
-                $resp = $aiResponse ?? '-';
-
-                $stmt->bind_param("sss", $ip, $msg, $resp);
+                $thinking = ""; // ถ้ามีระบบดึงความคิด AI มาใส่ตรงนี้ได้
+                $stmt->bind_param("ssss", $userIP, $userMessageSafe, $aiResponse, $thinking);
                 $stmt->execute();
                 $lastId = (int)$conn->insert_id;
                 $stmt->close();
             }
         }
-    } catch (Exception $e) {
-        // ถ้า DB มีปัญหา ให้ข้ามไปก่อนเพื่อให้ AI ยังตอบได้
-        // (เราสามารถแอบดู Error ได้จาก error_log)
-    }
+    } catch (Exception $e) { }
 
-    // ส่งคำตอบกลับหา User เสมอ แม้ Log จะบันทึกไม่ได้
     send_json([
         "response" => trim($aiResponse),
         "log_id" => $lastId ?? 0
     ]);
 } else {
-    // ถ้าอยากรู้สาเหตุจริงๆ ให้เปิดบรรทัดล่างนี้ตอนทดสอบครับ
-    // $friendlyMsg = "ระบบขัดข้อง: " . $lastErrorMsg; 
-    
+    // 🔥 บันทึกลง unanswered_questions เมื่อระบบพังหรือไม่มีคำตอบ
+    try {
+        if ($conn && $conn->ping()) {
+            $stmt = $conn->prepare("INSERT INTO unanswered_questions (user_message) VALUES (?)");
+            if ($stmt) {
+                $stmt->bind_param("s", $userMessageSafe);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+    } catch (Exception $e) { }
+
     $friendlyMsg = "พี่ RW-AI ขออภัยครับ ระบบเชื่อมต่อล้มเหลว หรือ น้องถามเร็วไป ลองใหม่อีกครั้งนะ ครับผม!";
     send_json(["response" => $friendlyMsg]);
 }
