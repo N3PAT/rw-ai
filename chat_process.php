@@ -258,8 +258,12 @@ $jsonPayload = json_encode([
 ], JSON_UNESCAPED_UNICODE);
 
 
-// 1. ลำดับโมเดล: แนะนำเอา Flash ไว้ท้ายสุดเสมอเพราะมันคือ "ตัวช่วยชีวิต" ที่ว่างตลอด
-$modelFallback = ["gemini-3.1-flash-lite-preview", "gemini-1.5-flash-8b", "gemini-1.5-flash"];
+// ใช้ชื่อ ID ให้ตรงกับใน JSON (models/ ถูกตัดออกเวลาเรียกผ่าน API)
+$modelFallback = [
+    "gemini-3.1-flash-lite-preview", // ตัวตึงปี 2026 ที่น้องเลือก
+    "gemini-2.5-flash-lite",         // สำรอง 1
+    "gemini-1.5-flash"               // สำรอง 2
+];
 
 $success = false;
 $aiResponse = "";
