@@ -38,26 +38,13 @@ $config = [
     ]
 ];
 
-// เช็คความเรียบร้อยของ Config
-if (empty($config['gemini']['api_keys'])) {
-    send_json(["response" => "พี่ RW-AI หา API Key ไม่เจอในระบบครับน้อง!"]);
-}
-
-if (empty($config['gemini']['model'])) {
-    send_json(["response" => "พี่ RW-AI ไม่รู้ว่าจะใช้ร่างไหนตอบดี (ลืมตั้ง GEMINI_MODEL ใน .env ครับ)"]);
-}
-
-// ดึง API Keys และกรองค่าว่างออก
-$config['gemini']['api_keys'] = array_filter(array_map('trim', explode(',', (string)getenv('GEMINI_API_KEY'))));
-
-// 1. ตรวจสอบก่อนว่ามี Key หรือไม่
+// รวบส่วนเช็ค Key และ Shuffle (บรรทัดที่ 43-60) ให้เหลือแค่ชุดนี้ชุดเดียวพอครับ:
 if (!empty($config['gemini']['api_keys'])) {
-    // 2. สุ่มลำดับ Key เพื่อกระจาย Load (เรียกแค่รอบเดียวพอครับ)
     shuffle($config['gemini']['api_keys']);
 } else {
-    // 3. ถ้าไม่มี Key เลย ให้แจ้งเตือนระบบ (ดีกว่าปล่อยให้ Script รันต่อแล้วพังในลูป)
     send_json(["response" => "พี่ RW-AI หา API Key ไม่เจอครับ ตรวจสอบไฟล์ .env หน่อยนะ!"]);
 }
+
 
 
 function send_json(array $data): void {
