@@ -253,7 +253,7 @@ $jsonPayload = json_encode([
 ], JSON_UNESCAPED_UNICODE);
 
 // 1. ลำดับโมเดล: แนะนำเอา Flash ไว้ท้ายสุดเสมอเพราะมันคือ "ตัวช่วยชีวิต" ที่ว่างตลอด
-$modelFallback = ["gemma-3-12b-it", "gemini-1.5-flash-8b", "gemini-1.5-flash"];
+$modelFallback = ["gemini-3.1-flash-lite-preview", "gemini-1.5-flash-8b", "gemini-1.5-flash"];
 
 $success = false;
 $aiResponse = "";
