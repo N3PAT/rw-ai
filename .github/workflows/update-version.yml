@@ -3,7 +3,7 @@ name: Auto Update Version
 on:
   push:
     branches:
-      - main  # หรือชื่อ branch ที่น้องใช้
+      - main  # ตรวจสอบชื่อ Branch ให้ตรงกับที่น้องใช้ (เช่น main หรือ master)
 
 jobs:
   build:
@@ -14,19 +14,20 @@ jobs:
 
       - name: Update Version in sw.js and index.php
         run: |
-          # ใช้เลข Run Number ของ GitHub มาเป็นเลขเวอร์ชัน (เช่น v1.0.80)
+          # กำหนดรูปแบบเวอร์ชันใหม่
           VERSION="1.0.${{ github.run_number }}-G31L"
           
-          # ใช้คำสั่ง sed เข้าไปแก้เลขในไฟล์ sw.js และ index.php
+          # ใช้ sed ค้นหาแพทเทิร์น vX.X.XX-G31L แล้วแทนที่ด้วยเวอร์ชันปัจจุบัน
+          # ตรวจสอบให้แน่ใจว่าในไฟล์ sw.js และ index.php มีข้อความรูปแบบนี้อยู่ก่อนแล้ว
           sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*-G31L/v$VERSION/g" sw.js
           sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*-G31L/v$VERSION/g" index.php
 
-            - name: Commit and Push changes
+      - name: Commit and Push changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
-          # เช็คว่ามีไฟล์ไหนเปลี่ยนจริงไหม
+          # ตรวจสอบความเปลี่ยนแปลงใน Working Directory
           if [ -n "$(git status --porcelain)" ]; then
             git add .
             git commit -m "chore: auto-update version to 1.0.${{ github.run_number }}-G31L"
