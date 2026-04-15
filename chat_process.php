@@ -60,7 +60,7 @@ function getUserIP() {
 }
 
 function checkRateLimit() {
-    $limit = 20; // เพิ่มโควตาเป็น 20 ครั้งต่อนาที
+    $limit = 75; // เพิ่มโควตาเป็น 20 ครั้งต่อนาที
     $window = 60; 
     $now = time();
 
