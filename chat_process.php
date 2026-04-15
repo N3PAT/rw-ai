@@ -32,7 +32,7 @@ $config = [
     "gemini" => [
         // เปลี่ยนเป็น api_keys (Array) และใช้ gemma-3-12b-it เป็นค่าเริ่มต้น
         "api_keys" => array_filter(array_map('trim', explode(',', (string)getenv('GEMINI_API_KEY')))),
-        "model"    => trim((string)getenv('GEMINI_MODEL')) ?: 'gemma-3-12b-it'
+        "model"    => trim((string)getenv('GEMINI_MODEL')) ?: 'gemini-3.1-flash-lite-preview'
     ]
 ];
 if (!empty($config['gemini']['api_keys'])) {
