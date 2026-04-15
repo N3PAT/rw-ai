@@ -252,7 +252,8 @@ $httpCode = 0;
 
 // 🔥 วนลูปผ่านทั้ง 5 Keys (ที่ถูกสุ่มลำดับแล้ว)
 foreach ($config['gemini']['api_keys'] as $index => $apiKey) {
-    $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/{$cleanModel}:generateContent?key=" . $apiKey;
+    // ใช้การต่อสตริงแบบธรรมดาเพื่อความชัวร์ ลดโอกาสที่ปีกกา {} จะทำพิษ
+$apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . $cleanModel . ":generateContent?key=" . $apiKey;
 
         $ch = curl_init($apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
