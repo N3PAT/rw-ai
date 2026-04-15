@@ -17,7 +17,7 @@ if (file_exists(__DIR__ . '/.env') && is_readable(__DIR__ . '/.env')) {
 }
 
 // --- 1. SETTINGS & ERROR HANDLING ---
-ini_set('display_errors', '0');
+ini_set('display_errors', '1');
 error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
@@ -280,7 +280,9 @@ foreach ($config['gemini']['api_keys'] as $apiKey) {
             CURLOPT_TIMEOUT => 15, // ลด Timeout ลงเพื่อให้สลับตัวสำรองได้ไวขึ้น
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4
+            CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4, // บังคับใช้ IPv4 (หลาย Server ตกม้าตายเพราะ IPv6)
+            CURLOPT_CONNECTTIMEOUT => 10,           // ตั้งเวลาเชื่อมต่อให้สั้นลง
+
         ]);
 
         $rawResponse = curl_exec($ch);
