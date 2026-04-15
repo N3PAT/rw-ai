@@ -266,8 +266,8 @@ $success = false;
 $aiResponse = "";
 $httpCode = 0;
 
-// 🔥 วนลูปสลับทั้ง Key และ Model เพื่อหนี 503
-foreach ($config['api_keys'] as $apiKey) {
+foreach ($config['gemini']['api_keys'] as $apiKey) {
+
     foreach ($modelFallback as $currentModel) {
         $apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/" . $currentModel . ":generateContent?key=" . $apiKey;
 
@@ -305,14 +305,15 @@ foreach ($config['api_keys'] as $apiKey) {
         break;
     }
 }
-// --- 6. LOGGING & CLEANUP ---
+// --- 6. LOGGING & SEND RESPONSE ---
 if ($success && !empty($aiResponse)) {
-    // 🔥 OPTIMIZE 3: ล้าง Log เก่า (สุ่มรัน 1 ใน 20 ครั้ง)
+    // สุ่มลบ Log เก่าทิ้งเพื่อประหยัดพื้นที่ฐานข้อมูล (รัน 1 ใน 20 ครั้ง)
     if (rand(1, 20) === 1) {
         $conn->query("DELETE FROM chat_logs WHERE created_at < NOW() - INTERVAL 20 DAY");
     }
 
     $lastId = 0;
+    // เตรียมบันทึกลง chat_logs
     $stmt = $conn->prepare("INSERT INTO chat_logs (ip_address, user_message, ai_response) VALUES (?, ?, ?)");
     if ($stmt) {
         $stmt->bind_param("sss", $userIP, $userMessageSafe, $aiResponse);
@@ -321,15 +322,14 @@ if ($success && !empty($aiResponse)) {
         $stmt->close();
     }
 
+    // ส่งคำตอบกลับไปที่หน้าเว็บ
     send_json([
         "response" => trim($aiResponse),
         "log_id" => $lastId
     ]);
 } else {
-    // กรณีที่วนจนครบทุก Key และทุก Model แล้วยังไม่ได้คำตอบ
+    // กรณีที่วนจนครบทุก Key และทุก Model แล้วยังไม่ได้คำตอบ (เช่น Google ล่มหมด)
     $errorDetail = json_decode($rawResponse ?? '', true);
-    $errorMessage = $errorDetail['error']['message'] ?? 'ขณะนี้มีผู้ใช้งานจำนวนมาก พี่ตอบไม่ทันจริงๆ ครับ ลองใหม่อีกครั้งนะ';
-    send_json(["response" => "พี่ RW-AI ขออภัยครับ (Code: $httpCode): $errorMessage"]);
+    $errorMessage = $errorDetail['error']['message'] ?? 'พี่ RW-AI ขออภัยครับ ขณะนี้มีผู้ใช้งานจำนวนมาก พี่ตอบไม่ทันจริงๆ ลองใหม่อีกครั้งนะ';
+    send_json(["response" => "พี่ RW-AI แจ้งเตือน (Code: $httpCode): $errorMessage"]);
 }
-
-
