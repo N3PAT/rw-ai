@@ -17,7 +17,7 @@ if (file_exists(__DIR__ . '/.env') && is_readable(__DIR__ . '/.env')) {
 }
 
 // --- 1. SETTINGS & ERROR HANDLING ---
-ini_set('display_errors', '1');
+ini_set('display_errors', '0');
 error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
