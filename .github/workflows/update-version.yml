@@ -21,10 +21,16 @@ jobs:
           sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*-G31L/v$VERSION/g" sw.js
           sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*-G31L/v$VERSION/g" index.php
 
-      - name: Commit and Push changes
+            - name: Commit and Push changes
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add .
-          git commit -m "chore: auto-update version to ${{ github.run_number }}"
-          git push
+          
+          # เช็คว่ามีไฟล์ไหนเปลี่ยนจริงไหม
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "chore: auto-update version to 1.0.${{ github.run_number }}-G31L"
+            git push
+          else
+            echo "Nothing to change, skipping commit."
+          fi
