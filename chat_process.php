@@ -150,23 +150,30 @@ $isApp = preg_match('/(แอป|แอพ|แอปพลิเคชัน|app
 $isRulesAndPenalties = preg_match('/(หักคะแนน|โดนกี่แต้ม|บทลงโทษ|ความผิด|เครื่องประดับ|ผิดระเบียบ|หนีเรียน|สาย)/ui', $userMessageRaw);
 // ปรับปรุง Regex สำหรับห้องเรียนและแผนการเรียน
 $isCurriculum = preg_match('/(สายการเรียน|แผนการเรียน|ห้องเรียนพิเศษ|กิฟต์|gifted|ep|s-mai|เตรียมวิศวะ|ห้องปกติ|สายอะไรบ้าง)/ui', $userMessageRaw);
+$isTuition = preg_match('/(ค่าเทอม|ค่าเรียน|ราคา|จ่ายเท่าไหร่|ค่าใช้จ่าย)/u', $userMessageRaw);
 
 
-// 3.1 ข้อมูลพื้นฐานโรงเรียน
+// 3.1 ข้อมูลพื้นฐานโรงเรียน (ปรับปรุงรองรับค่าเทอมและแอปพลิเคชัน)
 $resProfile = $conn->query("SELECT info_key, info_value_th, category FROM school_general_info");
 if ($resProfile) {
     while ($row = $resProfile->fetch_assoc()) {
         $cat = $row['category'];
         
-        if ($cat === 'identity' || $cat === 'motto' || 
+        // ตรวจสอบเงื่อนไขหมวดหมู่ที่ต้องการดึงข้อมูล
+        if ($cat === 'identity' || 
+            $cat === 'motto' || 
             ($isHistory && $cat === 'history') || 
             ($isMap && $cat === 'map') ||
-            ($isDressCode && $cat === 'uniform')) { 
+            ($isDressCode && $cat === 'uniform') ||
+            ($isTuition && $cat === 'tuition_fee') || // ดึงข้อมูลค่าเทอม
+            ($isApp && $cat === 'application')        // ดึงข้อมูลลิงก์โหลดแอป/วิธีใช้แอป
+        ) { 
             
+            // เก็บข้อมูลลงใน Context
             $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
             
-            // 🔥 เพิ่มเติม: ถ้าเป็นแผนผัง ให้เก็บเข้า map_url เพื่อใช้ใน Prompt
-            if ($cat === 'map' && strpos($row['info_value_th'], 'http') !== false) {
+            // 🔥 เพิ่มเติม: ถ้าเป็นแผนผัง หรือรูปภาพประกอบ ให้เก็บเข้า map_url หรือ image_url
+            if (($cat === 'map' || $cat === 'uniform') && strpos($row['info_value_th'], 'http') !== false) {
                 $context['map_url'] = $row['info_value_th'];
             }
         }
