@@ -146,6 +146,9 @@ $isGeneralReg = preg_match('/(ลาหยุด|มาสาย|ออกนอ
 $isParents   = preg_match('/(ผู้ปกครอง|ประชุมผู้ปกครอง|สมาคมผู้ปกครอง|รับส่งนักเรียน)/u', $userMessageRaw); // เพิ่มตัวแปรนี้
 // เพิ่มการตรวจจับคำที่เกี่ยวกับแอปพลิเคชันและ Student Care
 $isApp = preg_match('/(แอป|แอพ|แอปพลิเคชัน|application|student care|student messenger|สติวเดนท์แคร์|ยืนยันตัวตน|สแกน)/ui', $userMessageRaw);
+// 3.0 เพิ่มตัวแปรเช็คคำถามเรื่องกฎและบทลงโทษ
+$isRulesAndPenalties = preg_match('/(หักคะแนน|โดนกี่แต้ม|บทลงโทษ|ความผิด|เครื่องประดับ|ผิดระเบียบ|หนีเรียน|สาย)/ui', $userMessageRaw);
+
 
 // 3.1 ข้อมูลพื้นฐานโรงเรียน
 $resProfile = $conn->query("SELECT info_key, info_value_th, category FROM school_general_info");
@@ -182,17 +185,29 @@ if ($isFounder || $isHistory) {
     }
 }
 
-// 3.3 ทำเนียบผู้บริหาร
+// 3.3 ข้อมูลผู้บริหาร (แยกปัจจุบันและอดีต)
 if ($isAdmin) {
-    $resAdmins = $conn->query("SELECT year_start, name, position, notes FROM school_directors ORDER BY id DESC");
-    if ($resAdmins) {
-        $context['admins'] .= "ทำเนียบผู้บริหาร:\n";
-        while ($row = $resAdmins->fetch_assoc()) {
-            $note = !empty($row['notes']) ? " ({$row['notes']})" : "";
-            $context['admins'] .= "- พ.ศ. {$row['year_start']}: {$row['name']} ตำแหน่ง{$row['position']}{$note}\n";
+    // 1. ค้นหาผู้บริหารปัจจุบัน (จากตารางที่มี 5 คน)
+    $resCurrent = $conn->query("SELECT name, position FROM school_director ORDER BY id ASC");
+    if ($resCurrent && $resCurrent->num_rows > 0) {
+        $context['admins'] .= "\n[คณะผู้บริหารชุดปัจจุบัน]\n";
+        while ($row = $resCurrent->fetch_assoc()) {
+            $context['admins'] .= "- {$row['name']} ({$row['position']})\n";
+        }
+    }
+
+    // 2. ถ้าคำถามมีคำว่า "อดีต" หรือ "ทำเนียบ" ให้ดึงข้อมูลจากตาราง 28 แถวมาด้วย
+    if (preg_match('/(อดีต|ทำเนียบ|ประวัติ)/u', $userMessageRaw)) {
+        $resHistory = $conn->query("SELECT name, position FROM school_directors ORDER BY id DESC");
+        if ($resHistory && $resHistory->num_rows > 0) {
+            $context['admins'] .= "\n[ทำเนียบอดีตผู้บริหาร]\n";
+            while ($row = $resHistory->fetch_assoc()) {
+                $context['admins'] .= "- {$row['name']} ({$row['position']})\n";
+            }
         }
     }
 }
+
 
 // 3.4 ข้อมูลห้องและสำนักงาน
 if ($isRooms) {
@@ -363,6 +378,23 @@ if ($isApp) {
     $resAppReg = $conn->query("SELECT info_value_th FROM school_general_info WHERE info_key LIKE '%student_%' AND category = 'regulation'");
     while ($row = $resAppReg->fetch_assoc()) {
         $context['rules'] .= "- {$row['info_value_th']}\n";
+    }
+}
+// 3.14 ดึงข้อมูลบทลงโทษและการหักคะแนน (NEW!)
+if ($isRulesAndPenalties) {
+    // ดึงข้อมูลจากตาราง school_rules_penalties ที่น้องโชว์โครงสร้างให้ดู
+    $resPenalties = $conn->query("SELECT category, violation, penalty, actions FROM school_rules_penalties");
+    if ($resPenalties && $resPenalties->num_rows > 0) {
+        $context['rules'] .= "\n--- ข้อมูลระเบียบและการหักคะแนนความประพฤติ ---\n";
+        while ($row = $resPenalties->fetch_assoc()) {
+            $context['rules'] .= "หมวด: {$row['category']}\n";
+            $context['rules'] .= "ลักษณะความผิด: {$row['violation']}\n";
+            $context['rules'] .= "บทลงโทษ/คะแนนที่หัก: {$row['penalty']}\n";
+            if (!empty($row['actions'])) {
+                $context['rules'] .= "แนวทางแก้ไข: {$row['actions']}\n";
+            }
+            $context['rules'] .= "--------------------\n";
+        }
     }
 }
 
