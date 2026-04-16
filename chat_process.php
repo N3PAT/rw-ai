@@ -395,7 +395,7 @@ $jsonPayload = json_encode([
         "temperature" => 0.2,
         "topP" => 0.95,
         "topK" => 64,
-        "maxOutputTokens" => 1024
+        "maxOutputTokens" => 3024
     ],
     "safetySettings" => [
         ["category" => "HARM_CATEGORY_HARASSMENT", "threshold" => "BLOCK_NONE"],
