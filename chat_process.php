@@ -318,6 +318,35 @@ if ($isSacred) {
         $context['culture'] .= "- สิ่งศักดิ์สิทธิ์ประจำโรงเรียน: {$row['item_name']}\n";
     }
 }
+// --- 3.12 ข้อมูลรายละเอียดอาคารและรูปภาพ (NEW!) ---
+if ($isRooms || $isBuildings) {
+    // ดึงข้อมูลจากตาราง school_buildings ที่คุณเพิ่งสร้าง
+    $resBuildDetail = $conn->query("SELECT * FROM school_buildings");
+    if ($resBuildDetail && $resBuildDetail->num_rows > 0) {
+        $context['buildings'] .= "\n--- ข้อมูลอาคารเรียนและสถานที่ ---\n";
+        while ($row = $resBuildDetail->fetch_assoc()) {
+            $context['buildings'] .= "อาคาร: " . $row['building_name'] . "\n";
+            
+            // ส่ง URL ภาพให้ AI เห็นเพื่อให้มันไปใส่แท็ก <img>
+            if (!empty($row['image_url'])) {
+                $context['buildings'] .= "URL รูปภาพอาคาร: " . $row['image_url'] . "\n";
+            }
+            
+            // รวมข้อมูลชั้นต่างๆ
+            for ($i = 1; $i <= 6; $i++) {
+                $floor_key = "floor_" . $i;
+                if (!empty($row[$floor_key])) {
+                    $context['buildings'] .= "ชั้น $i: " . $row[$floor_key] . "\n";
+                }
+            }
+            
+            if (!empty($row['description'])) {
+                $context['buildings'] .= "เพิ่มเติม: " . $row['description'] . "\n";
+            }
+            $context['buildings'] .= "---\n";
+        }
+    }
+}
 
 // --- 4. PROMPT CONSTRUCTION ---
 $safeContext = array_map(function($val) {
