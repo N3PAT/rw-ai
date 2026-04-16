@@ -629,27 +629,33 @@ function useSuggestion(text) {
         showToast('ขณะนี้คุณกำลังใช้งานแบบออฟไลน์', 'offline', 5000);
     }
     // === [ D: SERVICE WORKER REGISTRATION ] ===
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) { // เติมวงเล็บเปิดที่หายไป
     window.addEventListener('load', () => {
-        // ใช้ PHP พ่น Timestamp ของไฟล์ sw.js เพื่อบังคับให้เบราว์เซอร์เห็นว่าเป็นไฟล์ใหม่เสมอเมื่อมีการแก้ไข
-        const swUrl = 'sw.js?v=<?php echo filemtime('sw.js'); ?>';
+        // ใช้ filemtime ดึงเวลาที่แก้ไขไฟล์ล่าสุดมาเป็น Version
+        const swUrl = 'sw.js?v=<?php echo filemtime("sw.js"); ?>';
         
         navigator.serviceWorker.register(swUrl)
             .then(reg => {
-                console.log('RW-AI PWA Ready! (Version: <?php echo filemtime('sw.js'); ?>)');
-                
-                // ตรวจสอบว่ามีการอัปเดตใหม่หรือไม่
+                console.log('RW-AI PWA Ready! (V: <?php echo filemtime("sw.js"); ?>)');
+
+                // 🔥 บังคับให้ Service Worker เช็คอัปเดตใหม่ทุกครั้งที่รีเฟรชหน้าเว็บ
+                reg.update();
+
+                // ตรวจสอบสถานะการอัปเดต
                 reg.onupdatefound = () => {
                     const installingWorker = reg.installing;
-                    installingWorker.onstatechange = () => {
-                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // ถ้าเจอเวอร์ชันใหม่ ให้ทำการ Refresh หน้าจอเพื่อเริ่มใช้ทันที
-                            window.location.reload();
-                        }
-                    };
+                    if (installingWorker) {
+                        installingWorker.onstatechange = () => {
+                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // ตรวจพบเวอร์ชันใหม่และติดตั้งเสร็จแล้ว -> รีเฟรชหน้าจอเพื่อใช้งานทันที
+                                console.log('New version found! Reloading...');
+                                window.location.reload();
+                            }
+                        };
+                    }
                 };
             })
-            .catch(err => console.log('PWA Error:', err));
+            .catch(err => console.error('PWA Error:', err));
     });
 }
 
