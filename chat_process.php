@@ -116,108 +116,149 @@ if (!$success) {
 }
 $conn->set_charset("utf8mb4");
 
-// --- 3. SMART LOAD ENGINE ---
+// --- 3. SMART LOAD ENGINE (Updated with Building Rules & School Council 2026) ---
 $context = [
-    "info" => "", "admins" => "", "behavior" => "", "rules" => "", 
-    "buildings" => "", "history" => "", "curriculum" => "", "subjects" => "", "map_url" => ""
+    "info" => "", "founder" => "", "admins" => "", "rooms" => "", 
+    "culture" => "", "social" => "", "strategy" => "", "behavior" => "", 
+    "rules" => "", "buildings" => "", "history" => "", "curriculum" => "", 
+    "parents" => "", "map_url" => "" 
 ];
 
-$isSong = preg_match('/(เพลง|มาร์ช|ร้องเพลง|ทำนอง)/u', $userMessageRaw);
-$isHistory = preg_match('/(ประวัติ|ก่อตั้ง|ปีที่|หลวงเทวฤทธิ์|ลูกเสืออากาศ​|ที่อยู่|ตำแหน่ง)/u', $userMessageRaw);
-$isFinance = preg_match('/(ค่าเทอม|จ่ายเงิน|การเงิน|ราคา|กี่บาท|เสียเงิน|ชำระเงิน)/u', $userMessageRaw);
-$isUniform = preg_match('/(แต่งกาย|ชุดนักเรียน|ผมยาว|เสื้อพละ|คณะสี|ชุดพละ|เครื่องแบบ|ปักดาว|รด|นศท|เชียงแสน|สุโขทัย|อู่ทอง|อยุธยา|รัตนโกสินทร์)/ui', $userMessageRaw);
-$isTravel = preg_match('/(เดินทาง|ไปโรงเรียน|รถเมล์|รถไฟฟ้า|bts|ไปยังไง|ที่ตั้ง|สายรถ)/ui', $userMessageRaw);
-$isAdmin = preg_match('/(ผอ|ผู้อำนวยการ|รอง|บริหาร|ครู|ใครเป็น|รายชื่อ)/u', $userMessageRaw);
-$isBehavior = preg_match('/(คะแนน|พฤติกรรม|ทัณฑ์บน|โควตา|ม.4|หักคะแนน|ความประพฤติ)/u', $userMessageRaw);
+// 3.0 เพิ่มการตรวจจับคำค้นหา (Regex) ครอบคลุมข้อมูลทั้งหมด
+$isFounder   = preg_match('/(ผู้ก่อตั้ง|หลวงเทวฤทธิ์|ประวัติหลวง|ทัตตานนท์|ประวัติโรงเรียน)/u', $userMessageRaw);
+$isRooms     = preg_match('/(ห้อง|อาคาร|ชั้น|สำนักงาน|ที่ตั้งห้อง|กลุ่มสาระ|พยาบาล|ทะเบียน)/u', $userMessageRaw);
+$isCulture   = preg_match('/(เพลง|มาร์ช|สาเก|เนื้อเพลง|ศิษย์เก่า|คนดัง|ดารา)/u', $userMessageRaw);
+$isSocial    = preg_match('/(ติดต่อ|เฟสบุ๊ค|facebook|ig|instagram|line|เบอร์โทร|โซเชียล)/i', $userMessageRaw);
+$isStrategy  = preg_match('/(วิสัยทัศน์|พันธกิจ|เป้าประสงค์|กลยุทธ์|ทิศทาง)/u', $userMessageRaw);
+$isAdmin     = preg_match('/(ผู้บริหาร|ผู้อำนวยการ|ผอ|รองผอ|ทำเนียบ)/u', $userMessageRaw); // เพิ่มตัวแปรที่ขาดหาย
+$isBuildings = preg_match('/(เปิด-ปิด|อาคารเรียน|ใช้ห้อง|เวลาทำการ|กฎอาคาร|ระเบียบอาคาร)/u', $userMessageRaw);
+$isCouncil   = preg_match('/(สภา|สภานักเรียน|คณะสี|เลือกตั้ง|ประธานสภา|กรรมการสภา|เชียงแสน|สุโขทัย|อู่ทอง|อยุธยา|รัตนโกสินทร์)/u', $userMessageRaw);
+$isHistory   = $isFounder; // ใช้ร่วมกัน
 
-// 3.1 ข้อมูลพื้นฐาน
-$resProfile = $conn->query("SELECT info_key, info_value_th, category FROM school_profile");
+// 3.1 ข้อมูลพื้นฐานโรงเรียน
+$resProfile = $conn->query("SELECT info_key, info_value_th, category FROM school_general_info");
 if ($resProfile) {
     while ($row = $resProfile->fetch_assoc()) {
         $cat = $row['category'];
-        if ($row['info_key'] === 'แผนผัง') {
-            $context['map_url'] = $row['info_value_th'];
-        } else {
-            if ($cat === 'general' || $cat === 'identity' || $cat === 'philosophy' || $cat === 'information' || 
-                (($isUniform || $isTravel) && $cat === 'rules') ||
-                ($isFinance && $cat === 'finance') ||
-                ($isSong && ($cat === 'song' || $cat === 'identity')) || 
-                ($isHistory && $cat === 'history')
-            ) {
-                $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
-            }
+        if ($cat === 'identity' || $cat === 'motto' || ($isHistory && $cat === 'history')) {
+            $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
         }
     }
 }
 
+// 3.2 ข้อมูลผู้ก่อตั้งและไทม์ไลน์
+if ($isFounder || $isHistory) {
+    $resFounder = $conn->query("SELECT attribute, value FROM founder_profile");
+    while ($row = $resFounder->fetch_assoc()) {
+        $context['founder'] .= "{$row['attribute']}: {$row['value']}\n";
+    }
+    $resTimeline = $conn->query("SELECT event_date, event_detail FROM founder_timeline ORDER BY id ASC");
+    while ($row = $resTimeline->fetch_assoc()) {
+        $context['founder'] .= "[{$row['event_date']}] {$row['event_detail']}\n";
+    }
+}
+
+// 3.3 ทำเนียบผู้บริหาร
 if ($isAdmin) {
-    $resAdmins = $conn->query("SELECT name, position FROM school_administrators LIMIT 10");
+    $resAdmins = $conn->query("SELECT year_start, name, position, notes FROM school_directors ORDER BY id DESC");
     if ($resAdmins) {
+        $context['admins'] .= "ทำเนียบผู้บริหาร:\n";
         while ($row = $resAdmins->fetch_assoc()) {
-            $context['admins'] .= "- {$row['name']} ({$row['position']})\n";
+            $note = !empty($row['notes']) ? " ({$row['notes']})" : "";
+            $context['admins'] .= "- พ.ศ. {$row['year_start']}: {$row['name']} ตำแหน่ง{$row['position']}{$note}\n";
         }
     }
 }
 
-if ($isBehavior) {
-    $resBehavior = $conn->query("SELECT condition_name, min_score, effect FROM behavior_thresholds");
-    if ($resBehavior) {
-        while ($row = $resBehavior->fetch_assoc()) {
-            $context['behavior'] .= "- {$row['condition_name']}: {$row['min_score']} คะแนน -> {$row['effect']}\n";
+// 3.4 ข้อมูลห้องและสำนักงาน
+if ($isRooms) {
+    $resRooms = $conn->query("SELECT category, sub_category, room_name, room_number FROM school_rooms_directory");
+    if ($resRooms) {
+        while ($row = $resRooms->fetch_assoc()) {
+            $context['rooms'] .= "[{$row['category']}] {$row['sub_category']} - {$row['room_name']} (ห้อง {$row['room_number']})\n";
         }
     }
 }
 
-$keywords = [
-    'buildings'  => '/(ตึก|อาคาร|ห้อง|เรียนที่ไหน|แผนผัง|สหกรณ์|ซื้อของ|ขายของ|ที่ตั้ง)/u',
-    'rules'      => '/(กฎ|ระเบียบ|ผิด|โดน|โทษ|ผมยาว|คะแนน|หัก|ทัณฑ์บน|ตัดคะแนน|ระเบียบ)/u',
-    'history'    => '/(ประวัติ|ก่อตั้ง|ปีที่ตั้ง|ผอ.คนแรก|เรื่องราว)/u',
-    'curriculum' => '/(แผน|สายการเรียน|ห้องเรียน|ม.ต้น|ม.ปลาย|กิ๊ฟ|วิทย์|ศิลป์|ห้อง)/u'
-];
-
-if (preg_match($keywords['buildings'], $userMessageRaw)) {
-    $res = $conn->query("SELECT building_name, floor, room_info, image_url FROM school_buildings");
-    if ($res) {
-        while ($row = $res->fetch_assoc()) {
-            $context['buildings'] .= "อาคาร:{$row['building_name']} ชั้น:{$row['floor']} ({$row['room_info']}) [Image:{$row['image_url']}]\n";
+// 3.5 วัฒนธรรมองค์กร เพลง และศิษย์เก่า
+if ($isCulture) {
+    $resCulture = $conn->query("SELECT type, title, content, composer_or_category FROM school_cultural_data");
+    while ($row = $resCulture->fetch_assoc()) {
+        if ($row['type'] === 'Song') {
+            $context['culture'] .= "เพลง: {$row['title']} (แต่งโดย {$row['composer_or_category']})\nเนื้อร้อง: {$row['content']}\n";
+        } else {
+            $context['culture'] .= "{$row['title']}: {$row['content']}\n";
         }
     }
 }
 
-if (preg_match($keywords['rules'], $userMessageRaw)) {
-    $res = $conn->query("SELECT category, description, punishment FROM school_rules");
-    if ($res) {
-        while ($row = $res->fetch_assoc()) {
-            $context['rules'] .= "หมวด:{$row['category']} - {$row['description']} (บทลงโทษ: {$row['punishment']})\n";
+// 3.6 ช่องทางติดต่อและโซเชียลมีเดีย
+if ($isSocial) {
+    $resSocial = $conn->query("SELECT name, platform, url, category FROM school_connections");
+    while ($row = $resSocial->fetch_assoc()) {
+        $context['social'] .= "- {$row['name']} ({$row['platform']}): {$row['url']} [หมวด:{$row['category']}]\n";
+    }
+}
+
+// 3.7 วิสัยทัศน์และกลยุทธ์
+if ($isStrategy) {
+    $resStrategy = $conn->query("SELECT section_type, item_no, detail FROM school_strategy ORDER BY section_type, item_no");
+    while ($row = $resStrategy->fetch_assoc()) {
+        $context['strategy'] .= "{$row['section_type']} ข้อ {$row['item_no']}: {$row['detail']}\n";
+    }
+}
+
+// 3.8 ระเบียบการใช้อาคารเรียน (Building Rules)
+if ($isBuildings) {
+    $resBuild = $conn->query("SELECT section, sub_section, item_no, detail, time_info FROM building_rules");
+    if ($resBuild) {
+        while ($row = $resBuild->fetch_assoc()) {
+            $time = !empty($row['time_info']) ? " [เวลา: {$row['time_info']}]" : "";
+            $context['buildings'] .= "[{$row['section']} - {$row['sub_section']}] ข้อ {$row['item_no']}: {$row['detail']}{$time}\n";
         }
     }
 }
 
-if (preg_match($keywords['history'], $userMessageRaw)) {
-    $res = $conn->query("SELECT topic, detail FROM school_history");
-    if ($res) {
-        while ($row = $res->fetch_assoc()) {
-            $context['history'] .= "- {$row['topic']}: {$row['detail']}\n";
+// 3.9 ระเบียบสภานักเรียน (School Council)
+if ($isCouncil) {
+    $resCouncil = $conn->query("SELECT sub_section, item_no, detail FROM school_council_rules");
+    if ($resCouncil) {
+        $context['rules'] .= "--- ระเบียบสภานักเรียน 2568 ---\n";
+        while ($row = $resCouncil->fetch_assoc()) {
+            $item = is_numeric($row['item_no']) ? "ข้อ {$row['item_no']}: " : "{$row['item_no']}: ";
+            $context['rules'] .= "[{$row['sub_section']}] {$item}{$row['detail']}\n";
         }
     }
 }
 
-if (preg_match($keywords['curriculum'], $userMessageRaw)) {
-    $res = $conn->query("SELECT level, room_type, room_number, program_name FROM curriculum_rooms");
-    if ($res) {
-        while ($row = $res->fetch_assoc()) {
-            $context['curriculum'] .= "{$row['level']} ห้อง {$row['room_number']} ({$row['room_type']}): {$row['program_name']}\n";
+// 3.10 ระเบียบการหักคะแนน/ความประพฤติ
+if (preg_match('/(กฎ|ระเบียบ|โทษ|หักคะแนน|ความประพฤติ)/u', $userMessageRaw)) {
+    $resRules = $conn->query("SELECT category, violation, penalty, actions FROM school_rules_penalties");
+    if ($resRules) {
+        while ($row = $resRules->fetch_assoc()) {
+            $context['rules'] .= "หมวด:{$row['category']} | ความผิด:{$row['violation']} | โทษ:{$row['penalty']} | แก้ไข:{$row['actions']}\n";
         }
     }
 }
+
+// 3.11 ข้อมูลสำหรับผู้ปกครอง
+if (isset($isParents) && $isParents) { // ตรวจสอบว่ามีตัวแปร $isParents หรือไม่
+    $resParents = $conn->query("SELECT section, sub_section, item_no, detail FROM parents");
+    if ($resParents) {
+        while ($row = $resParents->fetch_assoc()) {
+            $item = !empty($row['item_no']) ? "ข้อ {$row['item_no']}: " : "";
+            $context['parents'] .= "[{$row['section']} - {$row['sub_section']}] {$item}{$row['detail']}\n";
+        }
+    }
+}
+
 // --- 4. PROMPT CONSTRUCTION ---
-// 1. ล้างค่าที่เป็น null ออกก่อน
 $safeContext = array_map(function($val) {
     return is_string($val) ? trim($val) : '';
 }, $context);
 
-// 2. รวมข้อมูลเข้าด้วยกันเป็นก้อนเดียว
 $knowledgeBase = trim(implode("\n", array_filter($safeContext)));
+
 
 // 3. นำมาประกอบใน Prompt (ใช้ $knowledgeBase แทนการ implode ซ้ำ)
 $prompt = "คุณคือ 'พี่ RW-AI' รุ่นพี่ผู้ช่วยอัจฉริยะของโรงเรียนฤทธิยะวรรณาลัย 
