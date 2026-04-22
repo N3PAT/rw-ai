@@ -18,13 +18,12 @@
         body {
             font-family: 'Sarabun', sans-serif;
             background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none;     /* IE 10 and 11 */
-            user-select: none;         /* Standard syntax */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
             transition: background 0.5s ease;
         }
 
-        /* 🌙 Dark Mode Styles */
         body.dark-mode {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: #f1f5f9;
@@ -40,17 +39,14 @@
         body.dark-mode .border-gray-100, 
         body.dark-mode .border-gray-200 { border-color: #334155 !important; }
         
-        /* Message Bubbles in Dark Mode */
         body.dark-mode .ai-content { background-color: #334155 !important; border-color: #475569 !important; color: #f1f5f9 !important; }
         body.dark-mode .bg-blue-50 { background-color: #1e293b !important; color: #60a5fa !important; border-color: #2563eb !important; }
         
-        /* Dark Mode Icons */
         .sun-icon { display: none; }
         .moon-icon { display: block; }
         body.dark-mode .sun-icon { display: block; }
         body.dark-mode .moon-icon { display: none; }
 
-        /* ยกเว้น: ช่องกรอกข้อความ (Input) ยังต้องให้พิมพ์และลากคลุมได้ปกติ */
         input, textarea {
             -webkit-user-select: text;
             -ms-user-select: text;
@@ -61,7 +57,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* 🌟 Enhanced Animations */
         @keyframes messagePop {
             0% { opacity: 0; transform: scale(0.8) translateY(20px); }
             70% { transform: scale(1.05) translateY(-2px); }
@@ -101,82 +96,101 @@
         .ai-content img { cursor: zoom-in; transition: opacity 0.2s; }
         .ai-content img:hover { opacity: 0.9; }
 
-        /* Toast styles for dark mode */
         body.dark-mode .toast { background-color: #1e293b; border: 1px solid #334155; color: #fff; }
 
-/* === [ BADGE NOTIFICATION STYLE ] === */
-#toast-container {
-    position: fixed;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    width: auto;
-    min-width: 280px;
-    max-width: 90vw;
-    pointer-events: none;
-}
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            width: auto;
+            min-width: 280px;
+            max-width: 90vw;
+            pointer-events: none;
+        }
 
-.toast {
-    pointer-events: auto;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 18px;
-    border-radius: 9999px; /* ทรง Badge มนหลอด */
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    color: #334155;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0;
-    transform: translateY(-20px) scale(0.9);
-    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-}
+        .toast {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: #334155;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(-20px) scale(0.9);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
 
-.toast.show {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-}
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
 
-/* Badge Color Indicators */
-.toast-offline { border-bottom: 2px solid #ef4444; }
-.toast-online { border-bottom: 2px solid #10b981; }
-.toast-info { border-bottom: 2px solid #3b82f6; }
+        .toast-offline { border-bottom: 2px solid #ef4444; }
+        .toast-online { border-bottom: 2px solid #10b981; }
+        .toast-info { border-bottom: 2px solid #3b82f6; }
 
-.toast-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-}
+        .toast-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
 
-/* Dark Mode สำหรับ Badge */
-body.dark-mode .toast {
-    background: rgba(30, 41, 59, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #f8fafc;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-}
+        body.dark-mode .toast {
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
 
-.toast-offline svg { color: #f87171; }
-.toast-online svg { color: #34d399; }
-.toast-info svg { color: #60a5fa; }
+        .toast-offline svg { color: #f87171; }
+        .toast-online svg { color: #34d399; }
+        .toast-info svg { color: #60a5fa; }
 
-/* Dark Mode Support for Toast */
-body.dark-mode .toast {
-    background: rgba(30, 41, 59, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
-}
+        body.dark-mode .toast {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+        }
+
+        /* Typing Indicator Animation */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        body.dark-mode .typing-indicator span { background-color: #60a5fa; }
+        body.dark-mode #step-text { color: #93c5fd; }
 
     </style>
 </head>
@@ -191,37 +205,27 @@ body.dark-mode .toast {
             <h2 class="text-xl font-bold text-gray-800 mb-1">Chatbot RW-AI</h2>
             <div class="w-12 h-1 bg-blue-500 mx-auto rounded-full mb-4"></div>
             <p class="text-sm md:text-base text-gray-600 mb-4">
-    พัฒนาโดย ศิษย์เก่า<br>
-    <strong class="text-gray-800 text-lg">นาย ณัฏฐพัชร อินแสงจันทร์</strong><br>
-    <span class="inline-block mt-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">รุ่น 78</span>
-</p>
+                พัฒนาโดย ศิษย์เก่า<br>
+                <strong class="text-gray-800 text-lg">นาย ณัฏฐพัชร อินแสงจันทร์</strong><br>
+                <span class="inline-block mt-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">รุ่น 78</span>
+            </p>
 
-<div class="mb-6">
-    <a href="https://www.instagram.com/n19axor_?igsh=NmM5eHRyaTBubmUy" 
-       target="_blank" 
-       class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white rounded-xl text-sm font-medium transition-transform hover:scale-105 active:scale-95 shadow-md">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
-        </svg>
-        <span>n19axor_</span>
-    </a>
-</div>
-     <label class="flex items-center justify-center gap-2 mb-5 cursor-pointer group">
+            <div class="mb-6">
+                <a href="https://www.instagram.com/n19axor_?igsh=NmM5eHRyaTBubmUy" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 text-white rounded-xl text-sm font-medium transition-transform hover:scale-105 active:scale-95 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
+                    </svg>
+                    <span>n19axor_</span>
+                </a>
+            </div>
+            
+            <label class="flex items-center justify-center gap-2 mb-5 cursor-pointer group">
                 <a href="นโยบายการใช้เทคโนโลยี Generative AI ที่ยอมรับได้ (2).pdf" id="tos-link" class="block">
-    <div id="tos-box"
-        class="text-left bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 text-xs text-gray-600 h-24 overflow-y-auto shadow-inner cursor-pointer hover:bg-gray-100 transition">
-
-        <p class="font-bold text-gray-800 mb-2">
-            ข้อตกลงการใช้งาน (Terms of Service)
-        </p>
-
-        <p class="text-gray-600">
-            กรุณาคลิกเพื่ออ่านรายละเอียดข้อตกลงฉบับเต็ม
-        </p>
-
-    </div>
-</a>
-
+                    <div id="tos-box" class="text-left bg-gray-50 p-3 rounded-lg border border-gray-200 mb-4 text-xs text-gray-600 h-24 overflow-y-auto shadow-inner cursor-pointer hover:bg-gray-100 transition">
+                        <p class="font-bold text-gray-800 mb-2">ข้อตกลงการใช้งาน (Terms of Service)</p>
+                        <p class="text-gray-600">กรุณาคลิกเพื่ออ่านรายละเอียดข้อตกลงฉบับเต็ม</p>
+                    </div>
+                </a>
                 <input type="checkbox" id="tos-checkbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer">
                 <span class="text-sm text-gray-700">ฉันอ่านและยอมรับข้อตกลงการใช้งาน</span>
             </label>
@@ -233,31 +237,29 @@ body.dark-mode .toast {
 <div class="bg-[#f8fafc] w-full h-full sm:h-[90vh] sm:max-w-xl md:max-w-2xl lg:max-w-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border border-gray-200/50 transition-all duration-300">
     
     <header class="bg-gradient-to-r from-blue-700 to-blue-500 p-4 text-white flex items-center gap-3 relative z-10 shadow-sm no-select transition-all duration-500 dark:from-slate-900 dark:to-slate-800">
-    <div class="relative">
-        <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-blue-700 shadow-inner border-2 border-blue-200 overflow-hidden">
-            <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" alt="RW-AI Logo" class="w-full h-full object-cover">
+        <div class="relative">
+            <div class="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-blue-700 shadow-inner border-2 border-blue-200 overflow-hidden">
+                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" alt="RW-AI Logo" class="w-full h-full object-cover">
+            </div>
+            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
         </div>
-        <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-blue-600 rounded-full"></div>
-    </div>
-    <div class="flex-1">
-        <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">RW-AI Chatbot</h1>
-        <p id="ai-status" class="text-[10px] md:text-xs text-blue-100 font-light flex items-center gap-1">
-            <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
-            กำลังโหลดโมเดล...
-        </p>
-    </div>
+        <div class="flex-1">
+            <h1 class="font-bold text-base md:text-lg leading-tight tracking-wide">RW-AI Chatbot</h1>
+            <p id="ai-status" class="text-[10px] md:text-xs text-blue-100 font-light flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
+                กำลังโหลดโมเดล...
+            </p>
+        </div>
 
-    <button id="dark-mode-toggle" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors outline-none">
-        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-    </button>
+        <button id="dark-mode-toggle" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors outline-none">
+            <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
 
-
-    <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-    </button>
-</header>
-
+        <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
+    </header>
 
     <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 scroll-smooth">
         <div class="flex justify-start msg-animate">
@@ -271,41 +273,33 @@ body.dark-mode .toast {
         </div>
     </main>
 
-    <div id="step-indicator" class="hidden px-4 md:px-6 pb-2">
-        <div class="flex justify-start items-center gap-3 bg-blue-50/50 p-3 rounded-2xl w-fit border border-blue-100/50">
-            <span class="loader"></span>
-            <span id="step-text" class="text-xs md:text-sm text-blue-700 font-medium">กำลังวิเคราะห์คำถาม...</span>
+    <div id="step-indicator" class="hidden px-4 md:px-6 pb-2 transition-all duration-300">
+        <div class="flex justify-start items-center gap-3 bg-blue-50/80 p-3 py-2.5 rounded-2xl w-fit border border-blue-100/50 shadow-sm msg-animate">
+            <div class="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+            <span id="step-text" class="text-xs md:text-sm text-blue-700 font-medium">พี่ RW-AI กำลังพิมพ์...</span>
         </div>
     </div>
 
     <footer class="p-3 sm:p-4 md:p-5 bg-white border-t border-gray-100 z-10 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)]">
         <div id="suggestions" class="flex overflow-x-auto pb-3 gap-2 no-select scrollbar-hide">
-            <button onclick="useSuggestion('ระเบียบการแต่งกายนักเรียนเป็นอย่างไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">ระเบียบการแต่งกาย</button>
-            <button onclick="useSuggestion('ขอแผนผังโรงเรียนหน่อยได้ไหม?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">แผนผังโรงเรียน</button>
-            <button onclick="useSuggestion('ขอเนื้อเพลงมาร์ช​โรงเรียนหน่อย?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">เพลงมาร์ชโรงเรียน</button>
-            <button onclick="useSuggestion('สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียนคืออะไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100">สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียน</button>
+            <button onclick="useSuggestion('ระเบียบการแต่งกายนักเรียนเป็นอย่างไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100 hover:scale-105 transition-all duration-200">ระเบียบการแต่งกาย</button>
+            <button onclick="useSuggestion('ขอแผนผังโรงเรียนหน่อยได้ไหม?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100 hover:scale-105 transition-all duration-200">แผนผังโรงเรียน</button>
+            <button onclick="useSuggestion('ขอเนื้อเพลงมาร์ช​โรงเรียนหน่อย?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100 hover:scale-105 transition-all duration-200">เพลงมาร์ชโรงเรียน</button>
+            <button onclick="useSuggestion('สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียนคืออะไร?')" class="whitespace-nowrap px-4 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-full text-xs hover:bg-blue-100 hover:scale-105 transition-all duration-200">สิ่งศักดิ์สิทธิ์​ประจำ​โรงเรียน</button>
         </div>
 
         <div id="input-container" class="flex items-end gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-blue-400 transition-all">
-    <textarea 
-        id="user-input" 
-        placeholder="พิมพ์คำถามที่นี่..." 
-        rows="1" 
-        class="flex-1 resize-none bg-transparent px-3 py-2 focus:outline-none text-sm md:text-base text-gray-700 max-h-32">
-    </textarea>
-    
-    <button 
-        type="button" 
-        onclick="sendMessage()" 
-        id="send-btn" 
-        class="bg-blue-600 text-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center hover:bg-blue-700 hover:rotate-12 active:scale-90 transition-all shadow-md shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-        </svg>
-    </button>
-</div>
-
+            <textarea id="user-input" placeholder="พิมพ์คำถามที่นี่..." rows="1" class="flex-1 resize-none bg-transparent px-3 py-2 focus:outline-none text-sm md:text-base text-gray-700 max-h-32"></textarea>
+            
+            <button type="button" onclick="sendMessage()" id="send-btn" class="bg-blue-600 text-white w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center hover:bg-blue-700 hover:rotate-12 active:scale-90 transition-all shadow-md shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
     </footer>
 </div>
 
@@ -337,11 +331,8 @@ function scrollToBottom() {
     });
 }
 
-// 🛡️ [UPDATE] ฟังก์ชันส่ง Feedback 👍/👎
 async function sendFeedback(logId, rating, btnElement) {
     if (!logId) return;
-    
-    // แสดง UI ว่ากดแล้ว
     const parent = btnElement.parentElement;
     parent.innerHTML = '<span class="text-[10px] text-blue-500 animate-pulse">ขอบคุณสำหรับ Feedback ครับ!</span>';
 
@@ -368,7 +359,6 @@ function appendMessage(message, isUser = true, logId = null) {
         </div>`;
     } else {
         const markdownMessage = marked.parse(message);
-        // เพิ่มส่วนปุ่ม Feedback ถ้าไม่ใช่ข้อความจาก User
         const feedbackHtml = logId ? `
             <div class="flex gap-2 mt-2 feedback-btn">
                 <button onclick="sendFeedback(${logId}, 1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-400">
@@ -421,7 +411,6 @@ async function sendMessage() {
         const data = await response.json();
         stepIndicator.classList.add('hidden');
         
-        // 🛡️ [UPDATE] นำ response และ log_id ที่ได้จาก PHP มาแสดง
         appendMessage(data.response || 'พี่ขอโทษครับ ระบบขัดข้องชั่วคราว', false, data.log_id);
 
     } catch (error) {
@@ -440,10 +429,12 @@ function useSuggestion(text) {
     sendMessage();
 }
 
-inputField.addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 128) + 'px';
-});
+function autoResizeTextarea() {
+    inputField.style.height = 'auto';
+    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+}
+
+inputField.addEventListener('input', autoResizeTextarea);
 
 inputField.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -454,23 +445,21 @@ inputField.addEventListener('keydown', (e) => {
 
 window.onload = () => setTimeout(openPopup, 100);
 </script>
-    <script>
+
+<script>
     function toggleStartButton() {
         const checkbox = document.getElementById('tos-checkbox');
         const btn = document.getElementById('start-btn');
         
         if (checkbox.checked) {
-            // เมื่อติ๊กยอมรับ ให้เปิดใช้งานปุ่มและเปลี่ยนสีเป็นสีน้ำเงิน
             btn.disabled = false;
             btn.className = "w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-medium py-3 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] duration-300 cursor-pointer";
         } else {
-            // เมื่อเอาติ๊กออก ให้ล็อกปุ่มและเปลี่ยนเป็นสีเทา
             btn.disabled = true;
             btn.className = "w-full bg-gray-200 text-gray-400 cursor-not-allowed font-medium py-3 rounded-xl transition-all duration-300";
         }
     }
-    </script>
-    <script>
+
     const box = document.getElementById('tos-box');
     const linkBox = document.getElementById('tos-link');
     const checkbox = document.getElementById('tos-checkbox');
@@ -480,7 +469,6 @@ window.onload = () => setTimeout(openPopup, 100);
 
     box.addEventListener('scroll', () => {
         const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 5;
-
         if (atBottom) {
             unlocked = true;
             linkBox.classList.remove('pointer-events-none', 'opacity-50', 'cursor-not-allowed');
@@ -507,8 +495,9 @@ window.onload = () => setTimeout(openPopup, 100);
         if (!checkbox.checked) return;
         closePopup();
     });
-    </script>
-    <script>// ฟังก์ชันเปิด Modal ขยายรูป
+</script>
+
+<script>
 function openImageModal(src) {
     const modal = document.getElementById('image-modal');
     const modalImg = document.getElementById('modal-img');
@@ -522,7 +511,6 @@ function openImageModal(src) {
     }, 10);
 }
 
-// ฟังก์ชันปิด Modal
 function closeImageModal() {
     const modal = document.getElementById('image-modal');
     const modalImg = document.getElementById('modal-img');
@@ -536,38 +524,26 @@ function closeImageModal() {
     }, 300);
 }
 
-// เพิ่ม Event Listener ให้กับรูปภาพที่เกิดขึ้นใน Chat Container
 container.addEventListener('click', function(e) {
-    // ถ้าสิ่งที่คลิกคือรูปภาพ (img) ที่อยู่ในกล่องข้อความ AI
     if (e.target.tagName === 'IMG' && e.target.closest('.ai-content')) {
         openImageModal(e.target.src);
     }
 });
 </script>
+
 <div id="image-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeImageModal()">
     <button class="absolute top-5 right-5 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
     <img id="modal-img" src="" class="max-w-[95%] max-h-[90dvh] rounded-lg shadow-2xl object-contain scale-95 transition-transform duration-300" alt="Full Preview">
 </div>
-<script>
-  // ฟังก์ชันสำหรับใช้คำถามแนะนำ
-function useSuggestion(text) {
-    if (inputField.disabled) return; // ป้องกันการกดซ้ำขณะ AI กำลังตอบ
-    inputField.value = text;
-    autoResizeTextarea();
-    sendMessage();
-}
 
-</script>
 <div id="toast-container"></div>
 
 <script>
-    // === [ A: DARK MODE LOGIC ] ===
     const toggleBtn = document.getElementById('dark-mode-toggle');
     const body = document.body;
 
-    // เช็คค่าเริ่มต้น
     if (localStorage.getItem('theme-mode') === 'dark') {
         body.classList.add('dark-mode');
     }
@@ -580,7 +556,6 @@ function useSuggestion(text) {
         });
     }
 
-    // === [ B: BADGE NOTIFICATION LOGIC ] ===
     function showToast(message, type = 'info', duration = 4000) {
         let container = document.getElementById('toast-container');
         if (!container) {
@@ -592,7 +567,6 @@ function useSuggestion(text) {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type} no-select`;
 
-        // เลือก Icon ที่ดูเป็นทางการและเรียบง่าย
         const icons = {
             offline: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
             online: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
@@ -606,16 +580,14 @@ function useSuggestion(text) {
         
         container.appendChild(toast);
 
-        // แสดง Badge ด้วย Animation
         setTimeout(() => toast.classList.add('show'), 10);
 
-        // ซ่อนและลบออกเมื่อครบเวลา
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 500);
         }, duration);
     }
-    // === [ C: DETECT NETWORK STATUS ] ===
+
     window.addEventListener('offline', () => {
         showToast('ขาดการเชื่อมต่ออินเทอร์เน็ต พี่ RW-AI อาจตอบช้าลงนะครับ', 'offline', 5000);
     });
@@ -624,41 +596,34 @@ function useSuggestion(text) {
         showToast('กลับมาเชื่อมต่อแล้ว! ถามพี่ RW-AI ต่อได้เลยครับ', 'online', 3000);
     });
 
-    // ตรวจสอบสถานะตอนโหลดหน้าเว็บครั้งแรกด้วย (เผื่อเข้าเว็บมาตอนไม่มีเน็ตพอดี)
     if (!navigator.onLine) {
         showToast('ขณะนี้คุณกำลังใช้งานแบบออฟไลน์', 'offline', 5000);
     }
-    // === [ D: SERVICE WORKER REGISTRATION ] ===
-if ('serviceWorker' in navigator) { // เติมวงเล็บเปิดที่หายไป
-    window.addEventListener('load', () => {
-        // ใช้ filemtime ดึงเวลาที่แก้ไขไฟล์ล่าสุดมาเป็น Version
-        const swUrl = 'sw.js?v=<?php echo filemtime("sw.js"); ?>';
-        
-        navigator.serviceWorker.register(swUrl)
-            .then(reg => {
-                console.log('RW-AI PWA Ready! (V: <?php echo filemtime("sw.js"); ?>)');
 
-                // 🔥 บังคับให้ Service Worker เช็คอัปเดตใหม่ทุกครั้งที่รีเฟรชหน้าเว็บ
-                reg.update();
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swUrl = 'sw.js?v=<?php echo filemtime("sw.js"); ?>';
+            
+            navigator.serviceWorker.register(swUrl)
+                .then(reg => {
+                    console.log('RW-AI PWA Ready!');
+                    reg.update();
 
-                // ตรวจสอบสถานะการอัปเดต
-                reg.onupdatefound = () => {
-                    const installingWorker = reg.installing;
-                    if (installingWorker) {
-                        installingWorker.onstatechange = () => {
-                            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // ตรวจพบเวอร์ชันใหม่และติดตั้งเสร็จแล้ว -> รีเฟรชหน้าจอเพื่อใช้งานทันที
-                                console.log('New version found! Reloading...');
-                                window.location.reload();
-                            }
-                        };
-                    }
-                };
-            })
-            .catch(err => console.error('PWA Error:', err));
-    });
-}
-
+                    reg.onupdatefound = () => {
+                        const installingWorker = reg.installing;
+                        if (installingWorker) {
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('New version found! Reloading...');
+                                    window.location.reload();
+                                }
+                            };
+                        }
+                    };
+                })
+                .catch(err => console.error('PWA Error:', err));
+        });
+    }
 </script>
 
 </body>
