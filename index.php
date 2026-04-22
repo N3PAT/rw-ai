@@ -1,3 +1,17 @@
+<?php
+if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
+    header('Content-Type: application/json');
+    $url = "https://rwai1.statuspage.io/api/v2/summary.json";
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    echo $response;
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -6,6 +20,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-192x192.png">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -624,6 +639,73 @@ container.addEventListener('click', function(e) {
                 .catch(err => console.error('PWA Error:', err));
         });
     }
+</script>
+<script>
+// ตัวแปรเก็บสถานะล่าสุดเพื่อเช็คการเปลี่ยนแปลง
+let lastKnownStatus = {};
+
+async function checkSystemHealth() {
+    try {
+        const response = await fetch('?action=check_status');
+        const data = await response.json();
+        
+        const aiStatusText = document.getElementById('ai-status');
+        
+        // 1. ตรวจสอบสถานะภาพรวม (Indicator)
+        if (data.status.indicator === 'none') {
+            aiStatusText.innerHTML = '<span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span> AI พร้อมใช้งานแล้ว';
+        } else {
+            aiStatusText.innerHTML = '<span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> พบปัญหาในบางระบบ';
+        }
+
+        // 2. ตรวจสอบราย Component (API, Processing, Status)
+        data.components.forEach(comp => {
+            const currentStatus = comp.status;
+            const previousStatus = lastKnownStatus[comp.id];
+
+            // ถ้าสถานะเปลี่ยนจากปกติ (operational) เป็นอย่างอื่น
+            if (currentStatus !== 'operational' && previousStatus === 'operational') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'ระบบขัดข้อง',
+                    text: `ตรวจพบว่า ${comp.name} กำลังมีปัญหาครับ`,
+                    toast: true,
+                    position: 'top-end', // แจ้งเตือนมุมขวาบน
+                    showConfirmButton: false,
+                    timer: 7000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+            }
+
+            // ถ้าสถานะเปลี่ยนจากที่เคยล่ม กลับมาเป็นปกติ
+            if (currentStatus === 'operational' && previousStatus && previousStatus !== 'operational') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'ระบบกลับมาแล้ว',
+                    text: `${comp.name} ใช้งานได้ปกติแล้วครับ`,
+                    toast: true,
+                    position: 'top-end', // แจ้งเตือนมุมขวาบน
+                    showConfirmButton: false,
+                    timer: 4000
+                });
+            }
+
+            // อัปเดตสถานะล่าสุดเก็บไว้
+            lastKnownStatus[comp.id] = currentStatus;
+        });
+
+    } catch (error) {
+        console.error("Status Check Error:", error);
+    }
+}
+
+// เริ่มต้นเช็คทันทีที่โหลดหน้า และเช็คซ้ำทุกๆ 60 วินาที
+checkSystemHealth();
+setInterval(checkSystemHealth, 60000);
 </script>
 
 </body>
