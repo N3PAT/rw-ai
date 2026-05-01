@@ -151,6 +151,10 @@ $isRulesAndPenalties = preg_match('/(หักคะแนน|โดนกี่
 // ปรับปรุง Regex สำหรับห้องเรียนและแผนการเรียน
 $isCurriculum = preg_match('/(สายการเรียน|แผนการเรียน|ห้องเรียนพิเศษ|กิฟต์|gifted|ep|s-mai|เตรียมวิศวะ|ห้องปกติ|สายอะไรบ้าง)/ui', $userMessageRaw);
 $isTuition = preg_match('/(ค่าเทอม|ค่าเรียน|ราคา|จ่ายเท่าไหร่|ค่าใช้จ่าย)/u', $userMessageRaw);
+// --- เพิ่มเติมจากของเดิมที่นัทมี ---
+$isGrades     = preg_match('/(เกรด|ผลการเรียน|ปพ|ใบรับรอง|คะแนนสอบ|ติดร|ติดส)/u', $userMessageRaw);
+$isEnrollment = preg_match('/(ชุมนุม|วิชาเลือก|เลือกเสรี|ลงทะเบียนเรียน|ลงชุมนุม)/u', $userMessageRaw);
+// (ตัวแปร $isTuition มีอยู่แล้วในโค้ดนัท พี่จะใช้ตัวเดิมครับ)
 
 
 // 3.1 ข้อมูลพื้นฐานโรงเรียน (ปรับปรุงรองรับค่าเทอมและแอปพลิเคชัน)
@@ -419,6 +423,28 @@ if ($isCurriculum || $isRooms) {
         $context['rooms'] .= "\n--- ข้อมูลแผนการเรียนและห้องเรียน ---\n";
         while ($row = $resCurriculum->fetch_assoc()) {
             $context['rooms'] .= "ระดับ: {$row['level']} | {$row['room_type']} | แผนการเรียน: {$row['program_name']} | (ห้องเลขที่: {$row['room_number']})\n";
+        }
+    }
+}
+// 3.16 ข้อมูลลิงก์บริการการศึกษา (เกรด, ชุมนุม, ใบรับรอง, ค่าเทอม)
+if ($isGrades || $isEnrollment || $isTuition) {
+    $searchCat = [];
+    if ($isGrades) $searchCat[] = "'info'";
+    if ($isEnrollment) $searchCat[] = "'reg'";
+    if ($isTuition) $searchCat[] = "'tuition_fee'";
+    
+    $catQuery = implode(',', $searchCat);
+    $resLinks = $conn->query("SELECT name, url, platform FROM school_connections WHERE category IN ($catQuery)");
+    
+    if ($resLinks && $resLinks->num_rows > 0) {
+        $context['info'] .= "\n--- ลิงก์บริการที่เกี่ยวข้อง ---\n";
+        while ($row = $resLinks->fetch_assoc()) {
+            $context['info'] .= "- {$row['name']}: {$row['url']} ({$row['platform']})\n";
+        }
+        
+        // เคสพิเศษ: ถ้าถามค่าเทอม ให้บอกสถานที่จ่ายด้วย
+        if ($isTuition) {
+            $context['info'] .= "- สถานที่ติดต่อ: ห้องการเงิน อาคาร 1 ข้างห้องประชาสัมพันธ์\n";
         }
     }
 }
