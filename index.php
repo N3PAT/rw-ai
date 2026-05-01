@@ -183,7 +183,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
             color: #f1f5f9;
         }
 
-        /* Typing Indicator Animation */
+        
         .typing-indicator {
             display: flex;
             align-items: center;
@@ -206,6 +206,46 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
 
         body.dark-mode .typing-indicator span { background-color: #60a5fa; }
         body.dark-mode #step-text { color: #93c5fd; }
+
+.ai-content a {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+    color: #ffffff !important;
+    padding: 8px 18px;
+    border-radius: 9999px; 
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 8px 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    word-break: keep-all; 
+}
+        
+.ai-content a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px -3px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+
+.ai-content a::after {
+    content: "↗";
+    font-size: 16px;
+    margin-left: 6px;
+    font-weight: bold;
+}
+
+
+body.dark-mode .ai-content a {
+    background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+body.dark-mode .ai-content a:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+}
 
     </style>
 </head>
