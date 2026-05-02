@@ -157,32 +157,31 @@ $isEnrollment = preg_match('/(ชุมนุม|วิชาเลือก|เ
 // (ตัวแปร $isTuition มีอยู่แล้วในโค้ดนัท พี่จะใช้ตัวเดิมครับ)
 
 
-// 3.1 ข้อมูลพื้นฐานโรงเรียน (ปรับปรุงรองรับค่าเทอมและแอปพลิเคชัน)
+// 3.1 ข้อมูลพื้นฐานโรงเรียน (ปรับปรุงให้รองรับหมวด info และ reg)
 $resProfile = $conn->query("SELECT info_key, info_value_th, category FROM school_general_info");
 if ($resProfile) {
     while ($row = $resProfile->fetch_assoc()) {
         $cat = $row['category'];
         
-        // ตรวจสอบเงื่อนไขหมวดหมู่ที่ต้องการดึงข้อมูล
         if ($cat === 'identity' || 
             $cat === 'motto' || 
             ($isHistory && $cat === 'history') || 
             ($isMap && $cat === 'map') ||
             ($isDressCode && $cat === 'uniform') ||
-            ($isTuition && $cat === 'tuition_fee') || // ดึงข้อมูลค่าเทอม
-            ($isApp && $cat === 'application')        // ดึงข้อมูลลิงก์โหลดแอป/วิธีใช้แอป
+            ($isTuition && $cat === 'tuition_fee') ||
+            ($isApp && $cat === 'application') ||
+            ($isGrades && $cat === 'info') || // ✨ เพิ่ม: ถ้าถามเกรด ให้ดึงข้อมูลหมวด info
+            ($isEnrollment && $cat === 'reg')   // ✨ เพิ่ม: ถ้าถามลงทะเบียน ให้ดึงข้อมูลหมวด reg
         ) { 
-            
-            // เก็บข้อมูลลงใน Context
             $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
             
-            // 🔥 เพิ่มเติม: ถ้าเป็นแผนผัง หรือรูปภาพประกอบ ให้เก็บเข้า map_url หรือ image_url
             if (($cat === 'map' || $cat === 'uniform') && strpos($row['info_value_th'], 'http') !== false) {
                 $context['map_url'] = $row['info_value_th'];
             }
         }
     }
 }
+
 
 
 
