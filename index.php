@@ -238,6 +238,22 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
     font-weight: bold;
 }
 
+.ai-content ul {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.ai-content ol {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.ai-content li {
+    margin-bottom: 0.25rem;
+    display: list-item; 
+}
 
 body.dark-mode .ai-content a {
     background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
