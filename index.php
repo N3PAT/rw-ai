@@ -370,6 +370,7 @@ body.dark-mode .ai-content a:hover {
     </footer>
 </div>
 
+
 <script>
 marked.setOptions({ breaks: true, gfm: true });
 const inputField = document.getElementById('user-input');
@@ -378,6 +379,9 @@ const stepIndicator = document.getElementById('step-indicator');
 const stepText = document.getElementById('step-text');
 const sendBtn = document.getElementById('send-btn');
 const aiStatus = document.getElementById('ai-status');
+
+// --- 1. เพิ่มตัวแปรเก็บความจำของแชท ---
+let chatHistory = [];
 
 function openPopup() { 
     document.getElementById('credit-popup').classList.remove('opacity-0', 'pointer-events-none');
@@ -412,8 +416,7 @@ async function sendFeedback(logId, rating, btnElement) {
     } catch (e) { console.error("Feedback Error:", e); }
 }
 
-let chatHistory = [];
-
+// --- 2. ปรับฟังก์ชันแสดงข้อความ (ใช้เฉพาะของ User) ---
 function appendMessage(message, isUser = true) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     if (isUser) {
@@ -429,10 +432,12 @@ function appendMessage(message, isUser = true) {
     }
 }
 
+// --- 3. ฟังก์ชันใหม่: เอฟเฟกต์พิมพ์ข้อความของบอท ---
 function typeWriterEffect(fullText, logId) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     const uniqueId = 'msg-' + Date.now();
-    
+
+    // สร้างโครงสร้างข้อความเปล่าๆ ไว้ก่อน
     const msgHtml = `
     <div class="flex justify-start msg-animate">
         <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
@@ -454,22 +459,23 @@ function typeWriterEffect(fullText, logId) {
     let i = 0;
     let currentText = '';
 
-    
+    // ลูปพิมพ์ทีละตัวอักษร
     const typingInterval = setInterval(() => {
-        
+        // พิมพ์ทีละ 2-3 ตัวอักษรให้ดูเป็นธรรมชาติ (ไม่ช้าไป)
         const charsToAdd = 2; 
         currentText += fullText.substring(i, i + charsToAdd);
         i += charsToAdd;
 
+        // แปลง Markdown ไปพร้อมๆ กับการพิมพ์
         textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
         scrollToBottom();
 
-        
+        // พิมพ์เสร็จแล้ว
         if (i >= fullText.length) {
             clearInterval(typingInterval);
-            textContainer.innerHTML = marked.parse(fullText); 
+            textContainer.innerHTML = marked.parse(fullText); // เอา cursor ออก
 
-            
+            // แสดงปุ่ม Feedback
             if (logId) {
                 feedbackContainer.innerHTML = `
                 <div class="flex gap-2 mt-2 feedback-btn">
@@ -483,9 +489,10 @@ function typeWriterEffect(fullText, logId) {
                 feedbackContainer.classList.remove('hidden');
             }
         }
-    }, 25);
+    }, 10); // ความเร็วในการพิมพ์ (10 มิลลิวินาที)
 }
 
+// --- 4. ปรับฟังก์ชัน Send ให้ส่งและจำประวัติได้ ---
 async function sendMessage() {
     const message = inputField.value.trim();
     if (!message) return;
@@ -498,7 +505,8 @@ async function sendMessage() {
     appendMessage(message, true);
     stepIndicator.classList.remove('hidden');
     scrollToBottom();
-  
+
+    // จำคำถามของ User (เก็บแค่ 6 ข้อความล่าสุด จะได้ไม่เปลืองโควตา AI)
     chatHistory.push({ role: 'user', parts: [{ text: message }] });
     if (chatHistory.length > 6) chatHistory.shift(); 
 
@@ -508,7 +516,7 @@ async function sendMessage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 message: message,
-                history: chatHistory 
+                history: chatHistory // ส่งประวัติแชทไปให้ PHP
             })
         });
         
@@ -517,10 +525,11 @@ async function sendMessage() {
         
         const botReply = data.response || 'พี่ขอโทษครับ ระบบขัดข้องชั่วคราว';
 
-        
+        // จำคำตอบของ AI
         chatHistory.push({ role: 'model', parts: [{ text: botReply }] });
         if (chatHistory.length > 6) chatHistory.shift();
 
+        // เรียกฟังก์ชันพิมพ์ทีละตัวอักษร แทนการแสดงผลทันที
         typeWriterEffect(botReply, data.log_id);
 
     } catch (error) {
@@ -533,8 +542,31 @@ async function sendMessage() {
     }
 }
 
-        
+function useSuggestion(text) {
+    if (inputField.disabled) return;
+    inputField.value = text;
+    sendMessage();
+}
+
+function autoResizeTextarea() {
+    inputField.style.height = 'auto';
+    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
+}
+
+inputField.addEventListener('input', autoResizeTextarea);
+
+inputField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+window.onload = () => setTimeout(openPopup, 100);
 </script>
+
+
+
 
 <script>
     function toggleStartButton() {
