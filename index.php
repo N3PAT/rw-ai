@@ -246,6 +246,18 @@ body.dark-mode .ai-content a {
 body.dark-mode .ai-content a:hover {
     background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
 }
+        
+        .typing-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1em;
+            background-color: #3b82f6;
+            vertical-align: middle;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+        }
+        body.dark-mode .typing-cursor { background-color: #60a5fa; }
+        @keyframes blink { 50% { opacity: 0; } }
 
     </style>
 </head>
@@ -400,49 +412,86 @@ async function sendFeedback(logId, rating, btnElement) {
     } catch (e) { console.error("Feedback Error:", e); }
 }
 
-function appendMessage(message, isUser = true, logId = null) {
-    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-    let msgHtml = '';
+// --- 1. เพิ่มตัวแปรเก็บความจำของแชท ---
+let chatHistory = [];
 
+// --- 2. ปรับฟังก์ชันแสดงข้อความ (ใช้เฉพาะของ User) ---
+function appendMessage(message, isUser = true) {
+    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     if (isUser) {
-        msgHtml = `
+        const msgHtml = `
         <div class="flex justify-end msg-animate w-full">
             <div class="flex flex-col items-end max-w-[85%]">
                 <div class="bg-blue-600 text-white p-3.5 px-4 rounded-2xl rounded-br-none shadow-md text-sm md:text-base msg-text">${message}</div>
                 <span class="text-[10px] text-gray-400 mt-1 mr-1">${time}</span>
             </div>
         </div>`;
-    } else {
-        const markdownMessage = marked.parse(message);
-        const feedbackHtml = logId ? `
-            <div class="flex gap-2 mt-2 feedback-btn">
-                <button onclick="sendFeedback(${logId}, 1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                </button>
-                <button onclick="sendFeedback(${logId}, -1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
-                </button>
-            </div>
-        ` : '';
-
-        msgHtml = `
-        <div class="flex justify-start msg-animate">
-            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
-                <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full">
-            </div>
-            <div class="flex flex-col items-start max-w-[85%] w-full">
-                <div class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full">
-                    ${markdownMessage}
-                </div>
-                ${feedbackHtml}
-                <span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span>
-            </div>
-        </div>`;
+        container.insertAdjacentHTML('beforeend', msgHtml);
+        scrollToBottom();
     }
-    container.insertAdjacentHTML('beforeend', msgHtml);
-    scrollToBottom();
 }
 
+// --- 3. ฟังก์ชันใหม่: เอฟเฟกต์พิมพ์ข้อความของบอท ---
+function typeWriterEffect(fullText, logId) {
+    const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    const uniqueId = 'msg-' + Date.now();
+
+    // สร้างโครงสร้างข้อความเปล่าๆ ไว้ก่อน
+    const msgHtml = `
+    <div class="flex justify-start msg-animate">
+        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
+            <img src="https://taothetutor.wordpress.com/wp-content/uploads/2026/04/rw_20260412_025152_00002443189004229283520.png" class="w-full h-full object-cover">
+        </div>
+        <div class="flex flex-col items-start max-w-[85%] w-full">
+            <div id="${uniqueId}" class="bg-white text-gray-800 p-3.5 px-4 rounded-2xl rounded-bl-none shadow-sm border border-gray-100 text-sm md:text-base leading-relaxed ai-content w-full min-h-[40px]">
+            </div>
+            <div id="feedback-${uniqueId}" class="hidden"></div>
+            <span class="text-[10px] text-gray-400 mt-1 ml-1">${time}</span>
+        </div>
+    </div>`;
+
+    container.insertAdjacentHTML('beforeend', msgHtml);
+    scrollToBottom();
+
+    const textContainer = document.getElementById(uniqueId);
+    const feedbackContainer = document.getElementById(`feedback-${uniqueId}`);
+    let i = 0;
+    let currentText = '';
+
+    // ลูปพิมพ์ทีละตัวอักษร
+    const typingInterval = setInterval(() => {
+        // พิมพ์ทีละ 2-3 ตัวอักษรให้ดูเป็นธรรมชาติ (ไม่ช้าไป)
+        const charsToAdd = 2; 
+        currentText += fullText.substring(i, i + charsToAdd);
+        i += charsToAdd;
+
+        // แปลง Markdown ไปพร้อมๆ กับการพิมพ์
+        textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
+        scrollToBottom();
+
+        // พิมพ์เสร็จแล้ว
+        if (i >= fullText.length) {
+            clearInterval(typingInterval);
+            textContainer.innerHTML = marked.parse(fullText); // เอา cursor ออก
+
+            // แสดงปุ่ม Feedback
+            if (logId) {
+                feedbackContainer.innerHTML = `
+                <div class="flex gap-2 mt-2 feedback-btn">
+                    <button onclick="sendFeedback(${logId}, 1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
+                    </button>
+                    <button onclick="sendFeedback(${logId}, -1, this)" class="p-1 px-2 rounded-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>
+                    </button>
+                </div>`;
+                feedbackContainer.classList.remove('hidden');
+            }
+        }
+    }, 10); // ความเร็วในการพิมพ์ (10 มิลลิวินาที)
+}
+
+// --- 4. ปรับฟังก์ชัน Send ให้ส่งและจำประวัติได้ ---
 async function sendMessage() {
     const message = inputField.value.trim();
     if (!message) return;
@@ -456,21 +505,35 @@ async function sendMessage() {
     stepIndicator.classList.remove('hidden');
     scrollToBottom();
 
+    // จำคำถามของ User (เก็บแค่ 6 ข้อความล่าสุด จะได้ไม่เปลืองโควตา AI)
+    chatHistory.push({ role: 'user', parts: [{ text: message }] });
+    if (chatHistory.length > 6) chatHistory.shift(); 
+
     try {
         const response = await fetch('chat_process.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ 
+                message: message,
+                history: chatHistory // ส่งประวัติแชทไปให้ PHP
+            })
         });
         
         const data = await response.json();
         stepIndicator.classList.add('hidden');
         
-        appendMessage(data.response || 'พี่ขอโทษครับ ระบบขัดข้องชั่วคราว', false, data.log_id);
+        const botReply = data.response || 'พี่ขอโทษครับ ระบบขัดข้องชั่วคราว';
+
+        // จำคำตอบของ AI
+        chatHistory.push({ role: 'model', parts: [{ text: botReply }] });
+        if (chatHistory.length > 6) chatHistory.shift();
+
+        // เรียกฟังก์ชันพิมพ์ทีละตัวอักษร แทนการแสดงผลทันที
+        typeWriterEffect(botReply, data.log_id);
 
     } catch (error) {
         stepIndicator.classList.add('hidden');
-        appendMessage('ระบบเชื่อมต่อล้มเหลว หรือน้องถามเร็วเกินไปครับ ลองใหม่อีกครั้งนะ', false);
+        typeWriterEffect('ระบบเชื่อมต่อล้มเหลว หรือน้องถามเร็วเกินไปครับ ลองใหม่อีกครั้งนะ', null);
     } finally {
         inputField.disabled = false;
         sendBtn.disabled = false;
@@ -478,27 +541,7 @@ async function sendMessage() {
     }
 }
 
-function useSuggestion(text) {
-    if (inputField.disabled) return;
-    inputField.value = text;
-    sendMessage();
-}
-
-function autoResizeTextarea() {
-    inputField.style.height = 'auto';
-    inputField.style.height = Math.min(inputField.scrollHeight, 128) + 'px';
-}
-
-inputField.addEventListener('input', autoResizeTextarea);
-
-inputField.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-window.onload = () => setTimeout(openPopup, 100);
+        
 </script>
 
 <script>
