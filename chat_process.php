@@ -155,6 +155,8 @@ $isTuition = preg_match('/(ค่าเทอม|ค่าเรียน|รา
 $isGrades     = preg_match('/(เกรด|ผลการเรียน|ปพ|ใบรับรอง|คะแนนสอบ|ติดร|ติดส)/u', $userMessageRaw);
 $isEnrollment = preg_match('/(ชุมนุม|วิชาเลือก|เลือกเสรี|ลงทะเบียนเรียน|ลงชุมนุม)/u', $userMessageRaw);
 // (ตัวแปร $isTuition มีอยู่แล้วในโค้ดนัท พี่จะใช้ตัวเดิมครับ)
+// เพิ่มตัวแปรเช็คคำถามเรื่องการรับสมัครนักเรียน
+$isAdmission = preg_match('/(รับสมัคร|สมัครเรียน|วันสอบ|สอบเข้า|ประกาศผล|มอบตัว|กำหนดการ|ปฏิทิน|ม\.1|ม\.4)/ui', $userMessageRaw);
 
 
 // 3.1 ข้อมูลพื้นฐานโรงเรียน (ปรับปรุงให้รองรับหมวด info และ reg)
@@ -171,7 +173,8 @@ if ($resProfile) {
             ($isTuition && $cat === 'tuition_fee') ||
             ($isApp && $cat === 'application') ||
             ($isGrades && $cat === 'info') || // ✨ เพิ่ม: ถ้าถามเกรด ให้ดึงข้อมูลหมวด info
-            ($isEnrollment && $cat === 'reg')   // ✨ เพิ่ม: ถ้าถามลงทะเบียน ให้ดึงข้อมูลหมวด reg
+            ($isEnrollment && $cat === 'reg') ||
+            ($isAdmission && ($cat === 'info' || $cat === 'admission')) // ✨ เพิ่ม: ถ้าถามสมัครเรียน ให้ดึงหมวด info หรือ admission
         ) { 
             $context['info'] .= "- {$row['info_key']}: {$row['info_value_th']}\n";
             
