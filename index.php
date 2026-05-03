@@ -486,6 +486,15 @@ function typeWriterEffect(fullText, logId) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     const uniqueId = 'msg-' + Date.now();
 
+    // --- ส่วนที่ 1: ซ่อมแซม Markdown ที่พังจากการเคาะบรรทัด ---
+    // 1. รวมบรรทัดที่แยกระหว่าง ] และ ( เข้าด้วยกัน
+    // 2. เติมวงเล็บปิด ) ให้ลิงก์ที่ขาดหายไป (ป้องกันกรณี AI ตัดคำค้าง)
+    let cleanedText = fullText.replace(/\]\s*\n\s*\(/g, '](');
+    
+    // ตรวจสอบว่าถ้ามี [ ]( แต่ไม่มี ) ปิดท้าย ให้เติมให้
+    const regexMissingParen = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)(?!\))/g;
+    cleanedText = cleanedText.replace(regexMissingParen, '[$1]($2)');
+
     const msgHtml = `
     <div class="flex justify-start msg-animate">
         <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
@@ -508,32 +517,29 @@ function typeWriterEffect(fullText, logId) {
     let currentText = '';
 
     const typingInterval = setInterval(() => {
-        // เพิ่มความเร็วในการพิมพ์เล็กน้อยเพื่อให้ดูสมูท
-        const charsToAdd = 3; 
-        currentText += fullText.substring(i, i + charsToAdd);
+        const charsToAdd = 5; // พิมพ์ไวขึ้นเพื่อความลื่นไหล
+        currentText += cleanedText.substring(i, i + charsToAdd);
         i += charsToAdd;
 
-        // --- จุดสำคัญ: ตรวจสอบว่าในคำที่กำลังพิมพ์อยู่ มีวงเล็บเปิดแต่ยังไม่มีวงเล็บปิดของ Link หรือไม่ ---
-        // ถ้าพิมพ์ค้างไว้ เช่น [วิธีใช้งาน](https://... มันจะยังไม่ Render Markdown เพื่อไม่ให้พัง
+        // เช็คความสมบูรณ์ของวงเล็บก่อน Render เพื่อไม่ให้ "ค้าง"
         const openBracket = (currentText.match(/\[/g) || []).length;
         const closeBracket = (currentText.match(/\]/g) || []).length;
         const openParen = (currentText.match(/\(/g) || []).length;
         const closeParen = (currentText.match(/\)/g) || []).length;
 
         if (openBracket > closeBracket || openParen > closeParen) {
-            // ถ้า Tag ยังไม่สมบูรณ์ ให้แสดงเป็น Text ธรรมดาไปก่อน
+            // ถ้ากำลังพิมพ์ Tag ค้างอยู่ ให้แสดงเป็น Plain Text พร้อม Cursor
             textContainer.innerText = currentText + '▎';
         } else {
-            // ถ้า Tag ครบแล้ว หรือเป็นข้อความปกติ ค่อย Render เป็น HTML
+            // ถ้า Tag สมบูรณ์แล้ว ให้ Render เป็น HTML
             textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
         }
         
         scrollToBottom();
 
-        if (i >= fullText.length) {
+        if (i >= cleanedText.length) {
             clearInterval(typingInterval);
-            // Render ครั้งสุดท้ายเพื่อให้มั่นใจว่าวิดีโอและลิงก์แสดงผลครบถ้วน
-            textContainer.innerHTML = marked.parse(fullText); 
+            textContainer.innerHTML = marked.parse(cleanedText); 
 
             if (logId) {
                 feedbackContainer.innerHTML = `
@@ -548,8 +554,9 @@ function typeWriterEffect(fullText, logId) {
                 feedbackContainer.classList.remove('hidden');
             }
         }
-    }, 25); 
+    }, 25);
 }
+
 
 
 // --- 4. ปรับฟังก์ชัน Send ให้ส่งและจำประวัติได้ ---
