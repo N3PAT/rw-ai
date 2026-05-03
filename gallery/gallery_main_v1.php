@@ -37,32 +37,58 @@ if (!isset($_SESSION['rate_limit_time'])) {
     }
 }
 
-// --- 3. DATABASE CONNECTION (PDO) ---
-$host   = getenv('DB_HOST') ?: '127.0.0.1';
-$user   = getenv('DB_USERNAME') ?: 'root';
-$pass   = getenv('DB_PASSWORD') ?: '';
-$dbname = getenv('DB_DATABASE') ?: 'test_db';
-$port   = (int)(getenv('DB_PORT') ?: 3306);
+// --- 3. DATABASE CONNECTION (PDO with SSL for Aiven) ---
+// ดึงค่าจาก .env ให้ตรงตามที่ระบุมา
+$host    = getenv('DB_HOST');
+$user    = getenv('DB_USER');   // แก้จาก DB_USERNAME -> DB_USER
+$pass    = getenv('DB_PASS');   // แก้จาก DB_PASSWORD -> DB_PASS
+$dbname  = getenv('DB_NAME');   // แก้จาก DB_DATABASE -> DB_NAME
+$port    = (int)(getenv('DB_PORT') ?: 14495);
+$ca_cert = getenv('DB_SSL_CA') ?: 'ca.pem';
 
 try {
     $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
-    $pdo = new PDO($dsn, $user, $pass, [
+    
+    // ตั้งค่า Options สำหรับ PDO
+    $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false, // ป้องกัน SQL Injection
-    ]);
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+
+    // ตรวจสอบและเปิดใช้งาน SSL ถ้ามีไฟล์ ca.pem
+    $ca_path = __DIR__ . '/' . $ca_cert;
+    if (file_exists($ca_path)) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $ca_path;
+        // หากต้องการข้ามการ Verify Host ให้เปิดคอมเมนต์บรรทัดล่าง (กรณีรันบน Local บางตัว)
+        // $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+
+    $pdo = new PDO($dsn, $user, $pass, $options);
+
 } catch (PDOException $e) {
-    die("<!DOCTYPE html><html><body style='background:#008080; color:white; font-family:Tahoma; text-align:center; padding:50px;'><h1>⚠️ Fatal Error</h1><p>Database connection failed.</p></body></html>");
+    // แสดง Error แบบละเอียดเพื่อการตรวจสอบ (Debug)
+    die("<!DOCTYPE html><html><body style='background:#008080; color:white; font-family:Tahoma; text-align:center; padding:50px;'>
+        <h1>Fatal Error: Database Connection Failed</h1>
+        <div style='background:#fff; color:#000; padding:15px; border:2px solid #808080; display:inline-block; text-align:left;'>
+            <strong>Error Detail:</strong> " . htmlspecialchars($e->getMessage()) . "
+        </div>
+        <p style='margin-top:20px;'>* ตรวจสอบว่าไฟล์ <b>{$ca_cert}</b> อยู่ในโฟลเดอร์เดียวกับไฟล์ PHP หรือไม่?</p>
+    </body></html>");
 }
 
 // --- 4. ดึงข้อมูล ---
-$selected_album = isset($_GET['album']) ? (string)$_GET['album'] : null;
+try {
+    $selected_album = isset($_GET['album']) ? (string)$_GET['album'] : null;
 
-// ดึงรายชื่ออัลบั้มทั้งหมด (เปลี่ยนจาก mysqli เป็น PDO)
-$album_query = "SELECT album_name, COUNT(*) as total_images FROM gallery_images GROUP BY album_name ORDER BY created_at DESC";
-$albums_stmt = $pdo->query($album_query);
-$albums = $albums_stmt->fetchAll();
-$total_albums = count($albums);
+    // ดึงรายชื่ออัลบั้มทั้งหมด
+    $album_query = "SELECT album_name, COUNT(*) as total_images FROM gallery_images GROUP BY album_name ORDER BY created_at DESC";
+    $albums_stmt = $pdo->query($album_query);
+    $albums = $albums_stmt->fetchAll();
+    $total_albums = count($albums);
+} catch (PDOException $e) {
+    die("Query Error: " . $e->getMessage());
+}
 
 ?>
 <!DOCTYPE html>
