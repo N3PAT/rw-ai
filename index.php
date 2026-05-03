@@ -486,7 +486,6 @@ function typeWriterEffect(fullText, logId) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     const uniqueId = 'msg-' + Date.now();
 
-    // สร้างโครงสร้างข้อความเปล่าๆ ไว้ก่อน
     const msgHtml = `
     <div class="flex justify-start msg-animate">
         <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
@@ -508,23 +507,31 @@ function typeWriterEffect(fullText, logId) {
     let i = 0;
     let currentText = '';
 
-    // ลูปพิมพ์ทีละตัวอักษร
+    // เช็คก่อนว่าในคำตอบทั้งหมดมีวิดีโอไหม
+    const hasVideo = /\.(mp4|webm|ogg)/i.test(fullText);
+
     const typingInterval = setInterval(() => {
-        // พิมพ์ทีละ 2-3 ตัวอักษรให้ดูเป็นธรรมชาติ (ไม่ช้าไป)
-        const charsToAdd = 2; 
+        // เพิ่มความเร็วเป็น 4-5 ตัวอักษรต่อรอบ เพื่อความลื่นไหล
+        const charsToAdd = 5; 
         currentText += fullText.substring(i, i + charsToAdd);
         i += charsToAdd;
 
-        // แปลง Markdown ไปพร้อมๆ กับการพิมพ์
-        textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
+        if (hasVideo) {
+            // ถ้ามีวิดีโอ ให้แสดงเป็นข้อความดิบ (Plain Text) พร้อม Cursor ไปก่อน เพื่อไม่ให้ Browser ค้างจากการพยายาม Render Video
+            textContainer.innerText = currentText + '▎'; 
+        } else {
+            // ถ้าไม่มีวิดีโอ แปลง Markdown ตามปกติได้เลย
+            textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
+        }
+        
         scrollToBottom();
 
-        // พิมพ์เสร็จแล้ว
         if (i >= fullText.length) {
             clearInterval(typingInterval);
-            textContainer.innerHTML = marked.parse(fullText); // เอา cursor ออก
+            
+            // เมื่อพิมพ์เสร็จสมบูรณ์แล้ว ค่อยสั่ง Render Markdown ครั้งสุดท้าย (วิดีโอจะแสดงตอนนี้)
+            textContainer.innerHTML = marked.parse(fullText); 
 
-            // แสดงปุ่ม Feedback
             if (logId) {
                 feedbackContainer.innerHTML = `
                 <div class="flex gap-2 mt-2 feedback-btn">
@@ -538,8 +545,9 @@ function typeWriterEffect(fullText, logId) {
                 feedbackContainer.classList.remove('hidden');
             }
         }
-    }, 10); // ความเร็วในการพิมพ์ (10 มิลลิวินาที)
+    }, 15); // ปรับความเร็วให้สมดุล (15ms)
 }
+
 
 // --- 4. ปรับฟังก์ชัน Send ให้ส่งและจำประวัติได้ ---
 async function sendMessage() {
