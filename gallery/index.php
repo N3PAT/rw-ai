@@ -1,7 +1,6 @@
 <?php
-/** * ระบบจดหมายเหตุโรงเรียน v1.2 - Aiven + Cloudinary AI
- * แก้ไข: Permission Handling & Folder Auto-Correction
- */
+set_time_limit(300); // เพิ่มเวลาให้ Script ทำงานได้นานขึ้นเป็น /** * ระบบจดหมายเหตุโรงเรียน v1.2 ..
+
 
 // --- 0. LOAD .ENV FILE ---
 if (file_exists(__DIR__ . '/.env')) {
