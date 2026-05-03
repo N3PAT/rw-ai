@@ -32,7 +32,7 @@ if (!isset($_SESSION['rate_limit_time'])) {
     } else {
         $_SESSION['rate_limit_count']++;
         if ($_SESSION['rate_limit_count'] > $max_requests) {
-            die("<!DOCTYPE html><html lang='th'><body style='background:#008080; color:white; font-family:Tahoma; text-align:center; padding:50px;'><h1>⚠️ System Error: Too Many Requests</h1><p>คุณโหลดหน้าเว็บเร็วเกินไป กรุณารอสักครู่แล้วลองใหม่ครับ</p></body></html>");
+            die("<!DOCTYPE html><html lang='th'><body style='background:#008080; color:white; font-family:Tahoma; text-align:center; padding:50px;'><h1>System Error: Too Many Requests</h1><p>คุณโหลดหน้าเว็บเร็วเกินไป กรุณารอสักครู่แล้วลองใหม่ครับ</p></body></html>");
         }
     }
 }
@@ -96,7 +96,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Memory Archive 2001</title>
+    <title>RW-AI OLD GALLERY</title>
     <style>
         :root {
             --bg-color: #c0c0c0;
