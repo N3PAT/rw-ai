@@ -1,22 +1,70 @@
 <?php
-// DATABASE CONNECTION (Render .env)
-$host = getenv('DB_HOST');
-$user = getenv('DB_USERNAME');
-$pass = getenv('DB_PASSWORD');
-$dbname = getenv('DB_DATABASE');
-$port = getenv('DB_PORT') ?: '3306';
+declare(strict_types=1);
 
-$conn = new mysqli($host, $user, $pass, $dbname, $port);
-if ($conn->connect_error) { die("Connection failed"); }
+// เริ่ม Session สำหรับระบบ Rate Limit
+session_start();
 
-// ดึงรายชื่ออัลบั้มทั้งหมด (Group By album_name)
+// --- 1. LOAD ENV ---
+if (file_exists(__DIR__ . '/.env') && is_readable(__DIR__ . '/.env')) {
+    $lines = @file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if (is_array($lines)) {
+        foreach ($lines as $line) {
+            if (strpos(trim($line), '#') === 0 || strpos($line, '=') === false) continue;
+            list($name, $value) = explode('=', $line, 2);
+            putenv(sprintf('%s=%s', trim($name), trim($value)));
+        }
+    }
+}
+
+// --- 2. RATE LIMITING (ป้องกันการ Refresh รัวๆ จนเว็บล่ม) ---
+$max_requests = 100; // จำนวนรีเควสสูงสุด
+$window_seconds = 60; // ในระยะเวลา 60 วินาที
+$currentTime = time();
+
+if (!isset($_SESSION['rate_limit_time'])) {
+    $_SESSION['rate_limit_time'] = $currentTime;
+    $_SESSION['rate_limit_count'] = 1;
+} else {
+    $timePassed = $currentTime - $_SESSION['rate_limit_time'];
+    if ($timePassed > $window_seconds) {
+        $_SESSION['rate_limit_time'] = $currentTime;
+        $_SESSION['rate_limit_count'] = 1;
+    } else {
+        $_SESSION['rate_limit_count']++;
+        if ($_SESSION['rate_limit_count'] > $max_requests) {
+            die("<!DOCTYPE html><html lang='th'><body style='background:#008080; color:white; font-family:Tahoma; text-align:center; padding:50px;'><h1>⚠️ System Error: Too Many Requests</h1><p>คุณโหลดหน้าเว็บเร็วเกินไป กรุณารอสักครู่แล้วลองใหม่ครับ</p></body></html>");
+        }
+    }
+}
+
+// --- 3. DATABASE CONNECTION (PDO) ---
+$host   = getenv('DB_HOST') ?: '127.0.0.1';
+$user   = getenv('DB_USERNAME') ?: 'root';
+$pass   = getenv('DB_PASSWORD') ?: '';
+$dbname = getenv('DB_DATABASE') ?: 'test_db';
+$port   = (int)(getenv('DB_PORT') ?: 3306);
+
+try {
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+    $pdo = new PDO($dsn, $user, $pass, [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false, // ป้องกัน SQL Injection
+    ]);
+} catch (PDOException $e) {
+    die("<!DOCTYPE html><html><body style='background:#008080; color:white; font-family:Tahoma; text-align:center; padding:50px;'><h1>⚠️ Fatal Error</h1><p>Database connection failed.</p></body></html>");
+}
+
+// --- 4. ดึงข้อมูล ---
+$selected_album = isset($_GET['album']) ? (string)$_GET['album'] : null;
+
+// ดึงรายชื่ออัลบั้มทั้งหมด (เปลี่ยนจาก mysqli เป็น PDO)
 $album_query = "SELECT album_name, COUNT(*) as total_images FROM gallery_images GROUP BY album_name ORDER BY created_at DESC";
-$albums = $conn->query($album_query);
+$albums_stmt = $pdo->query($album_query);
+$albums = $albums_stmt->fetchAll();
+$total_albums = count($albums);
 
-// ตรวจสอบว่ามีการเลือกอัลบั้มไหนอยู่หรือไม่
-$selected_album = isset($_GET['album']) ? $_GET['album'] : null;
 ?>
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -186,32 +234,33 @@ $selected_album = isset($_GET['album']) ? $_GET['album'] : null;
         </div>
 
         <?php if ($selected_album): ?>
-            <a href="index.php" class="btn-back">⬅ Back to Albums</a>
+            <a href="?" class="btn-back">⬅ Back to Albums</a>
             <div class="image-grid">
                 <?php
-                $stmt = $conn->prepare("SELECT file_name FROM gallery_images WHERE album_name = ?");
-                $stmt->bind_param("s", $selected_album);
-                $stmt->execute();
-                $photos = $stmt->get_result();
+                // ใช้ PDO เตรียม Statement ดึงรูปภาพ
+                $stmt = $pdo->prepare("SELECT file_name FROM gallery_images WHERE album_name = ?");
+                $stmt->execute([$selected_album]);
+                $photos = $stmt->fetchAll();
                 
-                while($photo = $photos->fetch_assoc()): 
-                    $img_path = "uploads/" . $selected_album . "/" . $photo['file_name'];
+                foreach ($photos as $photo): 
+                    $safe_file_name = htmlspecialchars($photo['file_name']);
+                    $img_path = "uploads/" . htmlspecialchars($selected_album) . "/" . $safe_file_name;
                 ?>
                     <div class="photo-card">
                         <img src="<?php echo $img_path; ?>" alt="Photo">
-                        <div class="photo-name"><?php echo $photo['file_name']; ?></div>
+                        <div class="photo-name" title="<?php echo $safe_file_name; ?>"><?php echo $safe_file_name; ?></div>
                     </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </div>
         <?php else: ?>
             <div class="folder-grid">
-                <?php while($row = $albums->fetch_assoc()): ?>
+                <?php foreach ($albums as $row): ?>
                     <a href="?album=<?php echo urlencode($row['album_name']); ?>" class="folder-item">
                         <div class="folder-icon"></div>
                         <div><?php echo htmlspecialchars($row['album_name']); ?></div>
                         <div style="font-size: 10px; color: #666;">(<?php echo $row['total_images']; ?> items)</div>
                     </a>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </div>
@@ -219,7 +268,7 @@ $selected_album = isset($_GET['album']) ? $_GET['album'] : null;
 </div>
 
 <p style="text-align: center; font-size: 11px; color: white; margin-top: 20px;">
-    Total Albums Found: <?php echo $albums->num_rows; ?> | Powered by RW-AI
+    Total Albums Found: <?php echo $total_albums; ?> | Powered by RW-AI
 </p>
 
 </body>
