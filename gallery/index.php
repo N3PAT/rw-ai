@@ -1,10 +1,9 @@
 <?php
-/** * ระบบจดหมายเหตุโรงเรียน v1.1 - สไตล์ 2001 + AI Auto Blur
- * แก้ไข: การโหลด .env และการเชื่อมต่อ Aiven MySQL แบบ SSL
+/** * ระบบจดหมายเหตุโรงเรียน v1.2 - Aiven + Cloudinary AI
+ * แก้ไข: Permission Handling & Folder Auto-Correction
  */
 
 // --- 0. LOAD .ENV FILE ---
-// ต้องโหลดไฟล์ .env ก่อน เพื่อให้ getenv() มีค่า
 if (file_exists(__DIR__ . '/.env')) {
     $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -15,13 +14,12 @@ if (file_exists(__DIR__ . '/.env')) {
 }
 
 // --- 1. DATABASE CONFIG ---
-// ปรับ Key ให้ตรงกับไฟล์ .env ของคุณ (DB_USER, DB_PASS, DB_NAME)
 $host    = getenv('DB_HOST');
 $user    = getenv('DB_USER');   
 $pass    = getenv('DB_PASS');   
 $dbname  = getenv('DB_NAME');   
 $port    = (int)(getenv('DB_PORT') ?: 14495);
-$ca_cert = getenv('DB_SSL_CA') ?: 'ca.pem'; // ต้องมีไฟล์ ca.pem ในโฟลเดอร์เดียวกัน
+$ca_cert = getenv('DB_SSL_CA') ?: 'ca.pem';
 
 // --- 2. CLOUDINARY CONFIG ---
 $cloudinary_url = getenv('CLOUDINARY_URL'); 
@@ -35,45 +33,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
     $ca_path = __DIR__ . '/' . $ca_cert;
 
     if (file_exists($ca_path)) {
-        // ตั้งค่า SSL ก่อนทำการ connect
         mysqli_ssl_set($conn, NULL, NULL, $ca_path, NULL, NULL);
     }
 
-    // ทำการเชื่อมต่อแบบระบุ Port และ Client Flag SSL
     $is_connected = @mysqli_real_connect($conn, $host, $user, $pass, $dbname, $port, NULL, MYSQLI_CLIENT_SSL);
 
     if (!$is_connected) { 
-        die("⚠️ DB Connection Failed: " . mysqli_connect_error() . " (กรุณาเช็คไฟล์ .env และ ca.pem)"); 
+        die("⚠️ DB Error: " . mysqli_connect_error()); 
     }
 
+    // --- 4. FOLDER & PERMISSION MANAGEMENT ---
     $album_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['album_name']);
     $blur_status = isset($_POST['blur_faces']) ? 1 : 0;
-    
-    // สร้างโฟลเดอร์เก็บรูป
+
+    // ตรวจสอบโฟลเดอร์ uploads (หลัก)
+    if (!is_dir('uploads')) {
+        if (!@mkdir('uploads', 0755, true)) {
+            die("⚠️ Fatal Error: ไม่สามารถสร้างโฟลเดอร์ uploads ได้ (Permission Denied) กรุณารัน sudo chmod 775 ใน Terminal");
+        }
+    }
+
+    // ตรวจสอบความสามารถในการเขียนไฟล์
+    if (!is_writable('uploads')) {
+        die("⚠️ Fatal Error: โฟลเดอร์ uploads ไม่ได้รับอนุญาตให้เขียนไฟล์ (Permission Denied)");
+    }
+
     $upload_dir = 'uploads/' . $album_name . '/';
-    if (!is_dir($upload_dir)) { mkdir($upload_dir, 0777, true); }
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
 
     $count = 1;
-
     foreach ($_FILES['images']['name'] as $key => $name) {
         if ($_FILES['images']['error'][$key] == UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            $allowed = ['jpg', 'jpeg', 'png'];
-
-            if (in_array($ext, $allowed)) {
+            if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
+                
                 $new_filename = sprintf("%03d", $count) . "_" . $album_name . "." . $ext;
                 $temp_path = $_FILES['images']['tmp_name'][$key];
                 $target_path = $upload_dir . $new_filename;
 
-                // --- 4. AI AUTO BLUR LOGIC ---
+                // --- 5. AI AUTO BLUR LOGIC ---
                 if ($blur_status == 1 && !empty($cloudinary_url)) {
                     $url_parts = parse_url($cloudinary_url);
                     $api_key = $url_parts['user'];
                     $api_secret = $url_parts['pass'];
                     $cloud_name = $url_parts['host'];
-
                     $timestamp = time();
-                    // สร้าง Signature สำหรับ Cloudinary API
+
+                    // สร้าง Signature ที่ถูกต้อง
                     $params_to_sign = "timestamp=$timestamp&transformation=e_blur_faces:1000";
                     $signature = sha1($params_to_sign . $api_secret);
 
@@ -93,7 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
                     curl_close($ch);
 
                     if (isset($result['secure_url'])) {
-                        file_put_contents($target_path, file_get_contents($result['secure_url']));
+                        // ดึงไฟล์ที่เบลอแล้วจาก Cloudinary มาเซฟลงเครื่อง
+                        $img_data = @file_get_contents($result['secure_url']);
+                        if ($img_data) {
+                            file_put_contents($target_path, $img_data);
+                        } else {
+                            move_uploaded_file($temp_path, $target_path);
+                        }
                     } else {
                         move_uploaded_file($temp_path, $target_path);
                     }
@@ -101,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
                     move_uploaded_file($temp_path, $target_path);
                 }
 
-                // --- 5. INSERT TO DB ---
+                // --- 6. INSERT TO DB ---
                 $stmt = $conn->prepare("INSERT INTO gallery_images (album_name, file_name, blur_status) VALUES (?, ?, ?)");
                 $stmt->bind_param("ssi", $album_name, $new_filename, $blur_status);
                 $stmt->execute();
@@ -110,10 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
             }
         }
     }
-    $message = "ดำเนินการเสร็จสิ้น! จัดการไปทั้งหมด " . ($count-1) . " ไฟล์";
+    $message = "ดำเนินการเสร็จสิ้น! บันทึกเข้า Aiven DB แล้ว " . ($count-1) . " ไฟล์";
     $conn->close();
 }
 ?>
+
+                    
 
 <!DOCTYPE html>
 <html lang="th">
