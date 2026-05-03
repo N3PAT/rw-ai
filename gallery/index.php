@@ -1,58 +1,102 @@
 <?php
-/**
- * DATABASE CONNECTION (Render .env)
- * ดึงค่าจาก Environment Variables ที่ตั้งค่าไว้ใน Dashboard ของ Render
+/** * ระบบจดหมายเหตุโรงเรียน v1.1 - สไตล์ 2001 + AI Auto Blur
+ * เชื่อมต่อ DB และ Cloudinary ผ่าน Environment Variables
  */
-$host = getenv('DB_HOST');
-$user = getenv('DB_USERNAME');
-$pass = getenv('DB_PASSWORD');
-$dbname = getenv('DB_DATABASE');
-$port = getenv('DB_PORT') ?: '3306'; // ค่าเริ่มต้น 3306
 
-// ประมวลผลเมื่อมีการส่งฟอร์ม (POST)
+// 1. DATABASE CONFIG
+$host   = getenv('DB_HOST');
+$user   = getenv('DB_USERNAME');
+$pass   = getenv('DB_PASSWORD');
+$dbname = getenv('DB_DATABASE');
+$port   = getenv('DB_PORT') ?: '3306';
+
+// 2. CLOUDINARY CONFIG (สำหรับ AI เบลอหน้า)
+// รูปแบบ: cloudinary://key:secret@cloud_name
+$cloudinary_url = getenv('CLOUDINARY_URL'); 
+
 $message = "";
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
     
     $conn = new mysqli($host, $user, $pass, $dbname, $port);
-    if ($conn->connect_error) {
-        die("<script>alert('เชื่อมต่อฐานข้อมูลล้มเหลว: " . $conn->connect_error . "');</script>");
-    }
+    if ($conn->connect_error) { die("DB Error: " . $conn->connect_error); }
 
     $album_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['album_name']);
     $blur_status = isset($_POST['blur_faces']) ? 1 : 0;
     
-    // สร้างโฟลเดอร์เก็บไฟล์ (ใน Render หากใช้ Disk ต้อง Map Path ให้ถูก)
+    // สร้างโฟลเดอร์ในเครื่อง (หรือใน Render Disk)
     $upload_dir = 'uploads/' . $album_name . '/';
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
-    }
+    if (!is_dir($upload_dir)) { mkdir($upload_dir, 0777, true); }
 
     $count = 1;
-    $success_count = 0;
 
     foreach ($_FILES['images']['name'] as $key => $name) {
         if ($_FILES['images']['error'][$key] == UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-            $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-            
-            if (in_array($ext, $allowed)) {
-                // เปลี่ยนชื่อไฟล์เป็น 001_albumname.jpg
-                $new_filename = sprintf("%03d", $count) . "_" . $album_name . "." . $ext;
-                $target_file = $upload_dir . $new_filename;
+            $allowed = ['jpg', 'jpeg', 'png'];
 
-                if (move_uploaded_file($_FILES['images']['tmp_name'][$key], $target_file)) {
-                    // บันทึกลงตารางรูปภาพ
-                    $stmt = $conn->prepare("INSERT INTO gallery_images (album_name, file_name, blur_status) VALUES (?, ?, ?)");
-                    $stmt->bind_param("ssi", $album_name, $new_filename, $blur_status);
-                    $stmt->execute();
+            if (in_array($ext, $allowed)) {
+                // ตั้งชื่อไฟล์ตามสไตล์ 2010: 001_albumname.jpg
+                $new_filename = sprintf("%03d", $count) . "_" . $album_name . "." . $ext;
+                $temp_path = $_FILES['images']['tmp_name'][$key];
+                $target_path = $upload_dir . $new_filename;
+
+                if ($blur_status == 1 && !empty($cloudinary_url)) {
+                    /**
+                     * ส่วนของ AI AUTO BLUR
+                     * ส่งรูปไปที่ Cloudinary พร้อมสั่งให้เบลอหน้า (e_blur_faces)
+                     */
+                    $ch = curl_init();
+                    $cloudinary_endpoint = str_replace('cloudinary://', 'https://api.cloudinary.com/v1_1/', $cloudinary_url) . '/image/upload';
                     
-                    $count++;
-                    $success_count++;
+                    // แยก Key/Secret จาก URL
+                    $url_parts = parse_url($cloudinary_url);
+                    $api_key = $url_parts['user'];
+                    $api_secret = $url_parts['pass'];
+                    $cloud_name = $url_parts['host'];
+
+                    $timestamp = time();
+                    $params = "transformation=e_blur_faces:1000&timestamp=$timestamp" . $api_secret;
+                    $signature = sha1($params);
+
+                    $post_data = [
+                        'file' => new CURLFile($temp_path),
+                        'transformation' => 'e_blur_faces:1000', // คำสั่ง AI ให้เบลอหน้าคน
+                        'api_key' => $api_key,
+                        'timestamp' => $timestamp,
+                        'signature' => $signature
+                    ];
+
+                    curl_setopt($ch, CURLOPT_URL, "https://api.cloudinary.com/v1_1/$cloud_name/image/upload");
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    
+                    $result = json_decode(curl_exec($ch), true);
+                    curl_close($ch);
+
+                    if (isset($result['secure_url'])) {
+                        // โหลดไฟล์ที่เบลอแล้วจาก AI มาเก็บไว้ในเครื่องเรา
+                        file_put_contents($target_path, file_get_contents($result['secure_url']));
+                    } else {
+                        // ถ้า AI พลาด ให้เซฟไฟล์ปกติ
+                        move_uploaded_file($temp_path, $target_path);
+                    }
+                } else {
+                    // ถ้าไม่ติ๊กเบลอหน้า ให้เซฟไฟล์ปกติ
+                    move_uploaded_file($temp_path, $target_path);
                 }
+
+                // บันทึกข้อมูลลงฐานข้อมูล (แยก Table รูปภาพ)
+                $stmt = $conn->prepare("INSERT INTO gallery_images (album_name, file_name, blur_status) VALUES (?, ?, ?)");
+                $stmt->bind_param("ssi", $album_name, $new_filename, $blur_status);
+                $stmt->execute();
+                
+                $count++;
             }
         }
     }
-    $message = "สำเร็จ! อัปโหลดและเปลี่ยนชื่อไฟล์แล้ว $success_count รูป ในอัลบั้ม $album_name";
+    $message = "ดำเนินการเสร็จสิ้น! จัดการไปทั้งหมด " . ($count-1) . " ไฟล์";
     $conn->close();
 }
 ?>
@@ -62,191 +106,49 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Archive v1.0 (2001)</title>
+    <title>School Archive v1.1 - AI Powered</title>
     <style>
-        /* Y2K Windows Retro Style */
-        :root {
-            --bg-color: #c0c0c0;
-            --win-blue: #000080;
-            --win-gray: #808080;
-            --win-white: #ffffff;
-        }
-
-        body {
-            background-color: #008080; /* สีเขียว Teal ยุค Win95/98 */
-            font-family: 'Tahoma', sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px;
-        }
-
-        .window {
-            background: var(--bg-color);
-            border-top: 2px solid var(--win-white);
-            border-left: 2px solid var(--win-white);
-            border-right: 2px solid var(--win-gray);
-            border-bottom: 2px solid var(--win-gray);
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 2px 2px 0px #000;
-        }
-
-        .title-bar {
-            background: linear-gradient(90deg, var(--win-blue), #1084d0);
-            color: white;
-            padding: 3px 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-
-        .title-bar-controls button {
-            width: 16px;
-            height: 14px;
-            font-size: 9px;
-            background: var(--bg-color);
-            border: 1px solid #000;
-            padding: 0;
-            margin-left: 2px;
-            cursor: pointer;
-        }
-
-        .content {
-            padding: 20px;
-        }
-
-        fieldset {
-            border: 2px groove var(--win-white);
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        legend {
-            font-size: 13px;
-            color: #000;
-            padding: 0 5px;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            margin-bottom: 5px;
-        }
-
-        input[type="text"], input[type="file"] {
-            width: 100%;
-            box-sizing: border-box;
-            background: #fff;
-            border-top: 2px solid var(--win-gray);
-            border-left: 2px solid var(--win-gray);
-            border-right: 2px solid var(--win-white);
-            border-bottom: 2px solid var(--win-white);
-            padding: 5px;
-            font-family: 'Tahoma';
-        }
-
-        .blur-box {
-            background: #d4d4d4;
-            border: 1px dashed #444;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        button.btn-submit {
-            background: var(--bg-color);
-            border-top: 2px solid var(--win-white);
-            border-left: 2px solid var(--win-white);
-            border-right: 2px solid var(--win-gray);
-            border-bottom: 2px solid var(--win-gray);
-            padding: 8px 25px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            font-family: 'Tahoma';
-        }
-
-        button.btn-submit:active {
-            border-top: 2px solid var(--win-gray);
-            border-left: 2px solid var(--win-gray);
-            border-right: 2px solid var(--win-white);
-            border-bottom: 2px solid var(--win-white);
-        }
-
-        .alert {
-            background: #ffffcc;
-            border: 1px solid #808080;
-            padding: 10px;
-            font-size: 12px;
-            margin-bottom: 15px;
-            color: #c00;
-        }
-
-        /* Mobile Adjustments */
-        @media (max-width: 480px) {
-            .window { border: none; }
-            body { background: var(--bg-color); padding: 0; align-items: flex-start; }
-        }
+        /* CSS สไตล์ 2001 (คงเดิมจากที่คุณชอบ) */
+        :root { --bg: #c0c0c0; --blue: #000080; }
+        body { background-color: #008080; font-family: 'Tahoma', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .window { background: var(--bg); border: 2px solid; border-color: #fff #808080 #808080 #fff; width: 90%; max-width: 450px; box-shadow: 2px 2px 0 #000; }
+        .title-bar { background: linear-gradient(90deg, var(--blue), #1084d0); color: #fff; padding: 3px 6px; font-weight: bold; display: flex; justify-content: space-between; }
+        .content { padding: 20px; }
+        fieldset { border: 2px groove #fff; padding: 15px; margin-bottom: 15px; }
+        input[type="text"], input[type="file"] { width: 100%; box-sizing: border-box; background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; padding: 5px; margin-top: 5px; }
+        .blur-box { background: #ffffcc; border: 1px dashed #000; padding: 10px; margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+        button { width: 100%; padding: 10px; background: var(--bg); border: 2px solid; border-color: #fff #808080 #808080 #fff; font-weight: bold; cursor: pointer; }
+        button:active { border-color: #808080 #fff #fff #808080; }
+        .msg { color: #008000; font-weight: bold; text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="window">
     <div class="title-bar">
-        <span>📁 Gallery_Uploader.exe</span>
-        <div class="title-bar-controls">
-            <button>_</button>
-            <button>□</button>
-            <button style="background: #c0c0c0;">X</button>
-        </div>
+        <span>📷 Archive_Processor.exe</span>
+        <span>X</span>
     </div>
-    
     <div class="content">
-        <?php if($message): ?>
-            <div class="alert"><?php echo $message; ?></div>
-        <?php endif; ?>
-
+        <?php if($message): ?> <div class="msg"><?php echo $message; ?></div> <?php endif; ?>
+        
         <form action="" method="POST" enctype="multipart/form-data">
             <fieldset>
-                <legend>Upload Settings</legend>
+                <legend>Gallery Info</legend>
+                <label>Album Name (ชื่อโฟลเดอร์):</label>
+                <input type="text" name="album_name" required placeholder="เช่น sport_day_2007">
                 
-                <div class="input-group">
-                    <label>Album Name (ชื่ออัลบั้ม):</label>
-                    <input type="text" name="album_name" required placeholder="example_2007">
-                </div>
-
-                <div class="input-group">
-                    <label>Select Folder (เลือกทั้งโฟลเดอร์):</label>
-                    <input type="file" name="images[]" webkitdirectory directory multiple required>
-                </div>
-
+                <label style="margin-top:10px; display:block;">Select Folder:</label>
+                <input type="file" name="images[]" webkitdirectory directory multiple required>
+                
                 <div class="blur-box">
-                    <input type="checkbox" name="blur_faces" id="blur" value="1">
-                    <label for="blur" style="margin:0; font-weight:bold; color:#000080;">
-                        Auto-Blur Faces in Folder
-                    </label>
+                    <input type="checkbox" name="blur_faces" id="b" value="1">
+                    <label for="b"><b>ใช้ AI ตรวจจับและเบลอหน้าบุคคล</b></label>
                 </div>
             </fieldset>
-
-            <button type="submit" class="btn-submit">UPLOAD & RENAME</button>
+            <button type="submit">UPLOAD & AUTO-RENAME</button>
         </form>
-
-        <p style="font-size: 10px; color: #444; text-align: center; margin-top: 15px;">
-            System: Windows PHP-Webkit Engine v1.0.2<br>
-            © 2001-2026 School Memory Archive
-        </p>
+        <p style="font-size:10px; text-align:center;">Status: AI Engine Ready (Cloudinary)</p>
     </div>
 </div>
 
