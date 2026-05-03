@@ -371,7 +371,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
                 <span class="mt-2 text-xs font-medium text-gray-700 dark:text-gray-200">RW-AI</span>
             </a>
 
-            <a href="gallery_main_v1.php" class="flex flex-col items-center p-3 hover:bg-orange-50 dark:hover:bg-gray-700 rounded-2xl transition-all group">
+            <a href="gallery/gallery_main_v1.php" class="flex flex-col items-center p-3 hover:bg-orange-50 dark:hover:bg-gray-700 rounded-2xl transition-all group">
                 <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
