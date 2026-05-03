@@ -352,9 +352,47 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
             <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
 
-        <button onclick="openPopup()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        </button>
+        <div class="relative inline-block text-left">
+    <button onclick="toggleAppPopup()" id="appBtn" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600 dark:text-gray-300">
+            <circle cx="5" cy="5" r="2"/> <circle cx="12" cy="5" r="2"/> <circle cx="19" cy="5" r="2"/>
+            <circle cx="5" cy="12" r="2"/> <circle cx="12" cy="12" r="2"/> <circle cx="19" cy="12" r="2"/>
+            <circle cx="5" cy="19" r="2"/> <circle cx="12" cy="19" r="2"/> <circle cx="19" cy="19" r="2"/>
+        </svg>
+    </button>
+
+    <div id="appPopup" class="hidden absolute right-0 mt-3 w-80 bg-white dark:bg-[#2d2e31] rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden transform origin-top-right transition-all duration-200 scale-95 opacity-0">
+        <div class="p-4 grid grid-cols-3 gap-2">
+            
+            <a href="#" class="flex flex-col items-center p-3 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-2xl transition-all group">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <span class="text-white font-bold text-xs">RW</span>
+                </div>
+                <span class="mt-2 text-xs font-medium text-gray-700 dark:text-gray-200">RW-AI</span>
+            </a>
+
+            <a href="gallery_main_v1.php" class="flex flex-col items-center p-3 hover:bg-orange-50 dark:hover:bg-gray-700 rounded-2xl transition-all group">
+                <div class="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                </div>
+                <span class="mt-2 text-xs font-medium text-gray-700 dark:text-gray-200 text-center">RW Gallery</span>
+            </a>
+
+            <div class="flex flex-col items-center p-3 opacity-30 cursor-not-allowed">
+                <div class="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center">
+                    <plus class="text-gray-400">+</plus>
+                </div>
+                <span class="mt-2 text-[10px] text-gray-500">More</span>
+            </div>
+
+        </div>
+        
+        <div class="bg-gray-50 dark:bg-black/10 p-3 text-center border-t border-gray-100 dark:border-gray-700">
+            <button class="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline">More from RW-AI</button>
+        </div>
+    </div>
+</div>
+
     </header>
 
     <main id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 scroll-smooth">
@@ -779,6 +817,42 @@ container.addEventListener('click', function(e) {
         });
     }
 </script>
+    <script>
+        function toggleAppPopup() {
+    const popup = document.getElementById('appPopup');
+    const isHidden = popup.classList.contains('hidden');
+
+    if (isHidden) {
+        // เปิด
+        popup.classList.remove('hidden');
+        setTimeout(() => {
+            popup.classList.remove('scale-95', 'opacity-0');
+            popup.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    } else {
+        // ปิด
+        closeAppPopup();
+    }
+}
+
+function closeAppPopup() {
+    const popup = document.getElementById('appPopup');
+    popup.classList.add('scale-95', 'opacity-0');
+    popup.classList.remove('scale-100', 'opacity-100');
+    setTimeout(() => {
+        popup.classList.add('hidden');
+    }, 200);
+}
+
+// คลิกที่อื่นเพื่อปิด
+window.addEventListener('click', function(e) {
+    const popup = document.getElementById('appPopup');
+    const btn = document.getElementById('appBtn');
+    if (!btn.contains(e.target) && !popup.contains(e.target)) {
+        closeAppPopup();
+    }
+});
+    </script>
 <script>
 // ตัวแปรเก็บสถานะล่าสุดเพื่อเช็คการเปลี่ยนแปลง
 let lastKnownStatus = {};
