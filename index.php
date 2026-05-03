@@ -399,35 +399,15 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
     </footer>
 </div>
 
+
 <script>
-const renderer = new marked.Renderer();
-const originalLink = renderer.link.bind(renderer); 
-
-renderer.link = function(href, title, text) {
-    if (href && href.match(/\.(mp4|webm|ogg)$/i)) {
-        return `
-        <div class="my-3 flex flex-col items-start w-full transition-all duration-300">
-            <video controls playsinline preload="metadata" class="w-full max-h-[250px] md:max-h-[300px] object-contain rounded-xl border border-gray-200 shadow-sm bg-black/5 mb-2 dark:border-slate-600 dark:bg-slate-800">
-                <source src="${href}" type="video/mp4">
-                เบราว์เซอร์ของคุณไม่รองรับการเล่นวิดีโอนี้
-            </video>
-            <a href="${href}" target="_blank" title="${title || ''}" class="!text-xs">ดูแบบเต็มจอ (${text})</a>
-        </div>`;
-    }
-    
-    return originalLink(href, title, text);
-};
-
-marked.setOptions({ renderer: renderer, breaks: true, gfm: true });
-
-// ลบ const inputField ที่ซ้ำออกไป 1 บรรทัด
+marked.setOptions({ breaks: true, gfm: true });
 const inputField = document.getElementById('user-input');
 const container = document.getElementById('chat-container');
 const stepIndicator = document.getElementById('step-indicator');
 const stepText = document.getElementById('step-text');
 const sendBtn = document.getElementById('send-btn');
 const aiStatus = document.getElementById('ai-status');
-
 
 // --- 1. เพิ่มตัวแปรเก็บความจำของแชท ---
 let chatHistory = [];
@@ -486,15 +466,7 @@ function typeWriterEffect(fullText, logId) {
     const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     const uniqueId = 'msg-' + Date.now();
 
-    // --- ส่วนที่ 1: ซ่อมแซม Markdown ที่พังจากการเคาะบรรทัด ---
-    // 1. รวมบรรทัดที่แยกระหว่าง ] และ ( เข้าด้วยกัน
-    // 2. เติมวงเล็บปิด ) ให้ลิงก์ที่ขาดหายไป (ป้องกันกรณี AI ตัดคำค้าง)
-    let cleanedText = fullText.replace(/\]\s*\n\s*\(/g, '](');
-    
-    // ตรวจสอบว่าถ้ามี [ ]( แต่ไม่มี ) ปิดท้าย ให้เติมให้
-    const regexMissingParen = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)(?!\))/g;
-    cleanedText = cleanedText.replace(regexMissingParen, '[$1]($2)');
-
+    // สร้างโครงสร้างข้อความเปล่าๆ ไว้ก่อน
     const msgHtml = `
     <div class="flex justify-start msg-animate">
         <div class="w-8 h-8 md:w-10 md:h-10 rounded-full mr-2 flex-shrink-0 self-end mb-5 border border-blue-200 overflow-hidden">
@@ -516,31 +488,23 @@ function typeWriterEffect(fullText, logId) {
     let i = 0;
     let currentText = '';
 
+    // ลูปพิมพ์ทีละตัวอักษร
     const typingInterval = setInterval(() => {
-        const charsToAdd = 5; // พิมพ์ไวขึ้นเพื่อความลื่นไหล
-        currentText += cleanedText.substring(i, i + charsToAdd);
+        // พิมพ์ทีละ 2-3 ตัวอักษรให้ดูเป็นธรรมชาติ (ไม่ช้าไป)
+        const charsToAdd = 2; 
+        currentText += fullText.substring(i, i + charsToAdd);
         i += charsToAdd;
 
-        // เช็คความสมบูรณ์ของวงเล็บก่อน Render เพื่อไม่ให้ "ค้าง"
-        const openBracket = (currentText.match(/\[/g) || []).length;
-        const closeBracket = (currentText.match(/\]/g) || []).length;
-        const openParen = (currentText.match(/\(/g) || []).length;
-        const closeParen = (currentText.match(/\)/g) || []).length;
-
-        if (openBracket > closeBracket || openParen > closeParen) {
-            // ถ้ากำลังพิมพ์ Tag ค้างอยู่ ให้แสดงเป็น Plain Text พร้อม Cursor
-            textContainer.innerText = currentText + '▎';
-        } else {
-            // ถ้า Tag สมบูรณ์แล้ว ให้ Render เป็น HTML
-            textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
-        }
-        
+        // แปลง Markdown ไปพร้อมๆ กับการพิมพ์
+        textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
         scrollToBottom();
 
-        if (i >= cleanedText.length) {
+        // พิมพ์เสร็จแล้ว
+        if (i >= fullText.length) {
             clearInterval(typingInterval);
-            textContainer.innerHTML = marked.parse(cleanedText); 
+            textContainer.innerHTML = marked.parse(fullText); // เอา cursor ออก
 
+            // แสดงปุ่ม Feedback
             if (logId) {
                 feedbackContainer.innerHTML = `
                 <div class="flex gap-2 mt-2 feedback-btn">
@@ -554,10 +518,8 @@ function typeWriterEffect(fullText, logId) {
                 feedbackContainer.classList.remove('hidden');
             }
         }
-    }, 25);
+    }, 10); // ความเร็วในการพิมพ์ (10 มิลลิวินาที)
 }
-
-
 
 // --- 4. ปรับฟังก์ชัน Send ให้ส่งและจำประวัติได้ ---
 async function sendMessage() {
