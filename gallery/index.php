@@ -1,6 +1,8 @@
 <?php
-set_time_limit(300); // เพิ่มเวลาให้ Script ทำงานได้นานขึ้นเป็น /** * ระบบจดหมายเหตุโรงเรียน v1.2 ..
-
+set_time_limit(300); // เพิ่มเวลาให้ Script ทำงานได้นานขึ้นเป็น 5 นาที
+/** * ระบบจดหมายเหตุโรงเรียน v1.3 - Aiven + Cloudinary AI + Skip Duplicates
+ * เพิ่มเติม: ป้องกันการอัพโหลดรูปซ้ำในอัลบั้มเดียวกัน
+ */
 
 // --- 0. LOAD .ENV FILE ---
 if (file_exists(__DIR__ . '/.env')) {
@@ -45,16 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
     $album_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $_POST['album_name']);
     $blur_status = isset($_POST['blur_faces']) ? 1 : 0;
 
-    // ตรวจสอบโฟลเดอร์ uploads (หลัก)
     if (!is_dir('uploads')) {
         if (!@mkdir('uploads', 0755, true)) {
-            die("⚠️ Fatal Error: ไม่สามารถสร้างโฟลเดอร์ uploads ได้ (Permission Denied) กรุณารัน sudo chmod 775 ใน Terminal");
+            die("⚠️ Fatal Error: ไม่สามารถสร้างโฟลเดอร์ uploads ได้");
         }
     }
 
-    // ตรวจสอบความสามารถในการเขียนไฟล์
     if (!is_writable('uploads')) {
-        die("⚠️ Fatal Error: โฟลเดอร์ uploads ไม่ได้รับอนุญาตให้เขียนไฟล์ (Permission Denied)");
+        die("⚠️ Fatal Error: โฟลเดอร์ uploads ไม่ได้รับอนุญาตให้เขียนไฟล์");
     }
 
     $upload_dir = 'uploads/' . $album_name . '/';
@@ -62,17 +62,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
         mkdir($upload_dir, 0755, true);
     }
 
-    $count = 1;
+    // ตัวแปรนับสถานะ
+    $count_success = 0;
+    $count_skip = 0;
+
     foreach ($_FILES['images']['name'] as $key => $name) {
         if ($_FILES['images']['error'][$key] == UPLOAD_ERR_OK) {
             $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            
+            // ดึงชื่อไฟล์เดิมมาคลีนตัวอักษรแปลกๆ ออก (เพื่อใช้เช็คซ้ำ)
+            $safe_orig_name = preg_replace('/[^a-zA-Z0-9_-]/', '', pathinfo($name, PATHINFO_FILENAME));
+
             if (in_array($ext, ['jpg', 'jpeg', 'png'])) {
                 
-                $new_filename = sprintf("%03d", $count) . "_" . $album_name . "." . $ext;
-                $temp_path = $_FILES['images']['tmp_name'][$key];
+                // รูปแบบชื่อไฟล์: ชื่ออัลบั้ม_ชื่อไฟล์เดิม.jpg (เช่น sport_day_IMG1234.jpg)
+                $new_filename = $album_name . "_" . $safe_orig_name . "." . $ext;
                 $target_path = $upload_dir . $new_filename;
 
-                // --- 5. AI AUTO BLUR LOGIC ---
+                // --- 5. CHECK DUPLICATE (เช็คภาพซ้ำ) ---
+                $is_duplicate = false;
+                
+                // เช็คว่ามีไฟล์นี้ในโฟลเดอร์แล้วหรือยัง
+                if (file_exists($target_path)) {
+                    $is_duplicate = true;
+                } else {
+                    // เช็คในฐานข้อมูลเผื่อกรณีไฟล์หายแต่ข้อมูลยังอยู่
+                    $stmt_check = $conn->prepare("SELECT id FROM gallery_images WHERE album_name = ? AND file_name = ?");
+                    $stmt_check->bind_param("ss", $album_name, $new_filename);
+                    $stmt_check->execute();
+                    $stmt_check->store_result();
+                    if ($stmt_check->num_rows > 0) {
+                        $is_duplicate = true;
+                    }
+                    $stmt_check->close();
+                }
+
+                // ถ้าซ้ำ ให้บวกเลขไฟล์ข้ามและข้ามลูปนี้ไปเลย
+                if ($is_duplicate) {
+                    $count_skip++;
+                    continue; 
+                }
+
+                // --- 6. AI AUTO BLUR LOGIC ---
+                $temp_path = $_FILES['images']['tmp_name'][$key];
+
                 if ($blur_status == 1 && !empty($cloudinary_url)) {
                     $url_parts = parse_url($cloudinary_url);
                     $api_key = $url_parts['user'];
@@ -80,7 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
                     $cloud_name = $url_parts['host'];
                     $timestamp = time();
 
-                    // สร้าง Signature ที่ถูกต้อง
                     $params_to_sign = "timestamp=$timestamp&transformation=e_blur_faces:1000";
                     $signature = sha1($params_to_sign . $api_secret);
 
@@ -100,7 +132,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
                     curl_close($ch);
 
                     if (isset($result['secure_url'])) {
-                        // ดึงไฟล์ที่เบลอแล้วจาก Cloudinary มาเซฟลงเครื่อง
                         $img_data = @file_get_contents($result['secure_url']);
                         if ($img_data) {
                             file_put_contents($target_path, $img_data);
@@ -114,21 +145,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['images'])) {
                     move_uploaded_file($temp_path, $target_path);
                 }
 
-                // --- 6. INSERT TO DB ---
+                // --- 7. INSERT TO DB ---
                 $stmt = $conn->prepare("INSERT INTO gallery_images (album_name, file_name, blur_status) VALUES (?, ?, ?)");
                 $stmt->bind_param("ssi", $album_name, $new_filename, $blur_status);
                 $stmt->execute();
                 
-                $count++;
+                $count_success++;
             }
         }
     }
-    $message = "ดำเนินการเสร็จสิ้น! บันทึกเข้า Aiven DB แล้ว " . ($count-1) . " ไฟล์";
+    
+    // แจ้งเตือนสถานะแบบแยกไฟล์สำเร็จและไฟล์ซ้ำ
+    $message = "ดำเนินการเสร็จสิ้น! อัพโหลดใหม่ $count_success ไฟล์ ";
+    if ($count_skip > 0) {
+        $message .= "<br><span style='color: #800000;'>(ข้ามภาพที่เคยอัพโหลดแล้ว $count_skip ไฟล์)</span>";
+    }
+    
     $conn->close();
 }
 ?>
-
-                    
 
 <!DOCTYPE html>
 <html lang="th">
