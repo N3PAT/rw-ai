@@ -399,13 +399,11 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
     </footer>
 </div>
 
-
 <script>
 const renderer = new marked.Renderer();
 const originalLink = renderer.link.bind(renderer); 
 
 renderer.link = function(href, title, text) {
-    
     if (href && href.match(/\.(mp4|webm|ogg)$/i)) {
         return `
         <div class="my-3 flex flex-col items-start w-full transition-all duration-300">
@@ -422,14 +420,14 @@ renderer.link = function(href, title, text) {
 
 marked.setOptions({ renderer: renderer, breaks: true, gfm: true });
 
-
-const inputField = document.getElementById('user-input');
+// ลบ const inputField ที่ซ้ำออกไป 1 บรรทัด
 const inputField = document.getElementById('user-input');
 const container = document.getElementById('chat-container');
 const stepIndicator = document.getElementById('step-indicator');
 const stepText = document.getElementById('step-text');
 const sendBtn = document.getElementById('send-btn');
 const aiStatus = document.getElementById('ai-status');
+
 
 // --- 1. เพิ่มตัวแปรเก็บความจำของแชท ---
 let chatHistory = [];
