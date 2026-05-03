@@ -507,20 +507,24 @@ function typeWriterEffect(fullText, logId) {
     let i = 0;
     let currentText = '';
 
-    // เช็คก่อนว่าในคำตอบทั้งหมดมีวิดีโอไหม
-    const hasVideo = /\.(mp4|webm|ogg)/i.test(fullText);
-
     const typingInterval = setInterval(() => {
-        // เพิ่มความเร็วเป็น 4-5 ตัวอักษรต่อรอบ เพื่อความลื่นไหล
-        const charsToAdd = 5; 
+        // เพิ่มความเร็วในการพิมพ์เล็กน้อยเพื่อให้ดูสมูท
+        const charsToAdd = 3; 
         currentText += fullText.substring(i, i + charsToAdd);
         i += charsToAdd;
 
-        if (hasVideo) {
-            // ถ้ามีวิดีโอ ให้แสดงเป็นข้อความดิบ (Plain Text) พร้อม Cursor ไปก่อน เพื่อไม่ให้ Browser ค้างจากการพยายาม Render Video
-            textContainer.innerText = currentText + '▎'; 
+        // --- จุดสำคัญ: ตรวจสอบว่าในคำที่กำลังพิมพ์อยู่ มีวงเล็บเปิดแต่ยังไม่มีวงเล็บปิดของ Link หรือไม่ ---
+        // ถ้าพิมพ์ค้างไว้ เช่น [วิธีใช้งาน](https://... มันจะยังไม่ Render Markdown เพื่อไม่ให้พัง
+        const openBracket = (currentText.match(/\[/g) || []).length;
+        const closeBracket = (currentText.match(/\]/g) || []).length;
+        const openParen = (currentText.match(/\(/g) || []).length;
+        const closeParen = (currentText.match(/\)/g) || []).length;
+
+        if (openBracket > closeBracket || openParen > closeParen) {
+            // ถ้า Tag ยังไม่สมบูรณ์ ให้แสดงเป็น Text ธรรมดาไปก่อน
+            textContainer.innerText = currentText + '▎';
         } else {
-            // ถ้าไม่มีวิดีโอ แปลง Markdown ตามปกติได้เลย
+            // ถ้า Tag ครบแล้ว หรือเป็นข้อความปกติ ค่อย Render เป็น HTML
             textContainer.innerHTML = marked.parse(currentText) + '<span class="typing-cursor"></span>';
         }
         
@@ -528,8 +532,7 @@ function typeWriterEffect(fullText, logId) {
 
         if (i >= fullText.length) {
             clearInterval(typingInterval);
-            
-            // เมื่อพิมพ์เสร็จสมบูรณ์แล้ว ค่อยสั่ง Render Markdown ครั้งสุดท้าย (วิดีโอจะแสดงตอนนี้)
+            // Render ครั้งสุดท้ายเพื่อให้มั่นใจว่าวิดีโอและลิงก์แสดงผลครบถ้วน
             textContainer.innerHTML = marked.parse(fullText); 
 
             if (logId) {
@@ -545,7 +548,7 @@ function typeWriterEffect(fullText, logId) {
                 feedbackContainer.classList.remove('hidden');
             }
         }
-    }, 15); // ปรับความเร็วให้สมดุล (15ms)
+    }, 25); 
 }
 
 
