@@ -77,18 +77,23 @@ try {
     </body></html>");
 }
 
-// --- 4. ดึงข้อมูล ---
+// --- 4. ดึงข้อมูล (แก้ไข Query ให้รองรับ only_full_group_by) ---
 try {
     $selected_album = isset($_GET['album']) ? (string)$_GET['album'] : null;
 
-    // ดึงรายชื่ออัลบั้มทั้งหมด
-    $album_query = "SELECT album_name, COUNT(*) as total_images FROM gallery_images GROUP BY album_name ORDER BY created_at DESC";
+    // ใช้ MAX(created_at) เพื่อดึงวันที่ล่าสุดของรูปในอัลบั้มนั้นมาเรียงลำดับ
+    $album_query = "SELECT album_name, COUNT(*) as total_images 
+                    FROM gallery_images 
+                    GROUP BY album_name 
+                    ORDER BY MAX(created_at) DESC"; 
+    
     $albums_stmt = $pdo->query($album_query);
     $albums = $albums_stmt->fetchAll();
     $total_albums = count($albums);
 } catch (PDOException $e) {
     die("Query Error: " . $e->getMessage());
 }
+
 
 ?>
 <!DOCTYPE html>
