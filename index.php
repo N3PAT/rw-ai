@@ -401,7 +401,29 @@ if (isset($_GET['action']) && $_GET['action'] === 'check_status') {
 
 
 <script>
-marked.setOptions({ breaks: true, gfm: true });
+const renderer = new marked.Renderer();
+const originalLink = renderer.link.bind(renderer); 
+
+renderer.link = function(href, title, text) {
+    
+    if (href && href.match(/\.(mp4|webm|ogg)$/i)) {
+        return `
+        <div class="my-3 flex flex-col items-start w-full transition-all duration-300">
+            <video controls playsinline preload="metadata" class="w-full max-h-[250px] md:max-h-[300px] object-contain rounded-xl border border-gray-200 shadow-sm bg-black/5 mb-2 dark:border-slate-600 dark:bg-slate-800">
+                <source src="${href}" type="video/mp4">
+                เบราว์เซอร์ของคุณไม่รองรับการเล่นวิดีโอนี้
+            </video>
+            <a href="${href}" target="_blank" title="${title || ''}" class="!text-xs">ดูแบบเต็มจอ (${text})</a>
+        </div>`;
+    }
+    
+    return originalLink(href, title, text);
+};
+
+marked.setOptions({ renderer: renderer, breaks: true, gfm: true });
+
+
+const inputField = document.getElementById('user-input');
 const inputField = document.getElementById('user-input');
 const container = document.getElementById('chat-container');
 const stepIndicator = document.getElementById('step-indicator');
